@@ -3,7 +3,7 @@ services:
         web:
                 image: flask_open
                 build: .
-                
+
                 ports:
                         - "8307:8307"
                 volumes:
@@ -14,6 +14,6 @@ services:
                 image: socket_open
                 build: ./socket
                 ports:
-                        - "8500:8500"
-    
+                        - "8600:8500"
+
                 restart: unless-stopped
