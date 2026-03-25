@@ -5,7 +5,7 @@ services:
                 build: .
 
                 ports:
-                        - "8307:8307"
+                        - "8325:8325"
                 volumes:
                         - ./instance:/app/instance
                 restart: unless-stopped
