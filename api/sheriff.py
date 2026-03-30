@@ -172,6 +172,7 @@ class SheriffAPI:
             except AuthError as e:
                 return e.body, e.status_code
 
+            from datetime import date as _date
             sheriff = Sheriff(
                 name=validated['name'],
                 uid=validated['uid'],
@@ -181,6 +182,11 @@ class SheriffAPI:
                 rank=body.get('rank', 'Deputy'),
                 station=body.get('station', 'San Diego Central'),
                 phone=body.get('phone', ''),
+                years_of_service=body.get('years_of_service', 0),
+                date_of_hire=_date.fromisoformat(body['date_of_hire']) if body.get('date_of_hire') else None,
+                date_of_birth=_date.fromisoformat(body['date_of_birth']) if body.get('date_of_birth') else None,
+                specialization=body.get('specialization', ''),
+                bio=body.get('bio', ''),
             )
 
             try:
