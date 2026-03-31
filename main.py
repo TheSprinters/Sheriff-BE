@@ -29,6 +29,10 @@ app.register_blueprint(sheriff_chat_api)
 def index():
     return render_template("index.html")
 
+@app.route('/u2table')
+def u2table():
+    return "u2table page"
+
 
 @app.errorhandler(404)
 def page_not_found(e):
