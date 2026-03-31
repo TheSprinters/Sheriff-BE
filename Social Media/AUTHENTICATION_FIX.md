@@ -79,7 +79,7 @@ Now the "Create Post" button should work! The login warning should disappear.
 1. Open browser console (F12)
 2. Look for errors
 3. Check if you see: `Auth check failed`
-4. Make sure `javaURI` points to `http://localhost:8587`
+4. Make sure `javaURI` points to `http://localhost:8325`
 
 ### "Getting CORS errors"
 

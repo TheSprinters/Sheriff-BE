@@ -26,7 +26,7 @@ assets/js/api/config.js
 const javaURI = "http://localhost:8585";
 
 // AFTER (Correct):
-const javaURI = "http://localhost:8587";
+const javaURI = "http://localhost:8325";
 ```
 
 ---
@@ -45,7 +45,7 @@ Your `config.js` should look something like this:
 
 ```javascript
 // Backend API Configuration
-export const javaURI = "http://localhost:8587";  // ← Make sure it's 8587!
+export const javaURI = "http://localhost:8325";  // ← Make sure it's 8587!
 
 export const fetchOptions = {
     method: 'GET',
@@ -79,7 +79,7 @@ Open browser console (F12) and you should see:
 
 ### **Test Backend is Working:**
 ```bash
-curl http://localhost:8587/api/post/all
+curl http://localhost:8325/api/post/all
 # Should return: []
 ```
 
@@ -163,7 +163,7 @@ If it doesn't exist, create `assets/js/api/config.js`:
 
 ```javascript
 // Backend API Configuration
-export const javaURI = "http://localhost:8587";
+export const javaURI = "http://localhost:8325";
 
 export const fetchOptions = {
     method: 'GET',
@@ -185,7 +185,7 @@ export const fetchOptions = {
 cd ~/pages  # adjust path as needed
 
 # Find and replace 8585 with 8587
-find assets -name "*.js" -type f -exec sed -i '' 's/8585/8587/g' {} +
+find assets -name "*.js" -type f -exec sed -i '' 's/8585/8325/g' {} +
 
 # Refresh your browser
 # Done!
