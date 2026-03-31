@@ -1,7 +1,7 @@
 version: '3'
 services:
         web:
-                image: flask_open
+                image: sheriff
                 build: .
 
                 ports:
@@ -9,11 +9,4 @@ services:
                 volumes:
                         - ./instance:/app/instance
                 restart: unless-stopped
-
-        socketio:
-                image: socket_open
-                build: ./socket
-                ports:
-                        - "8600:8500"
-
-                restart: unless-stopped
+                
