@@ -1,5 +1,6 @@
 # imports from flask
-from flask import redirect, render_template, request, url_for, jsonify
+from flask import redirect, render_template, request, url_for, jsonify, current_app, g
+from flask_login import current_user, login_user, logout_user, LoginManager
 from flask.cli import AppGroup
 from dotenv import load_dotenv
 
@@ -13,6 +14,11 @@ from api.sheriff_chat import sheriff_chat_api
 # database Initialization functions
 from model.sheriff import Sheriff, initSheriffs
 
+# Setup Login Manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
 import os
 
 # Load environment variables
@@ -21,6 +27,17 @@ load_dotenv()
 # register URIs for api endpoints — sheriff only
 app.register_blueprint(sheriff_api)
 app.register_blueprint(sheriff_chat_api)
+
+# Tell Flask-Login the view function name of your login route
+login_manager.login_view = "login"
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Sheriff.query.get(int(user_id))
+
+@app.context_processor
+def inject_user():
+    return dict(current_user=current_user)
 
 
 # ── Routes ──────────────────────────────────────────────────────────────────
