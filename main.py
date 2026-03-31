@@ -27,9 +27,7 @@ app.register_blueprint(sheriff_chat_api)
 
 @app.route('/')
 def index():
-    """Redirect home to the sheriff portal."""
-    return redirect(url_for('sheriff_portal'))
-
+    return render_template("index.html")
 
 @app.route('/sheriff/')
 def sheriff_portal():
