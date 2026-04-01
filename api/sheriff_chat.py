@@ -1,4 +1,4 @@
-"""AI-powered FAQ chatbot for the Deputy Sheriffs' Association using Claude API."""
+"""AI-powered FAQ chatbot for the Deputy Sheriffs' Association using OpenAI API."""
 import requests
 from flask import Blueprint, request, jsonify
 from __init__ import app
@@ -6,7 +6,7 @@ import os
 
 sheriff_chat_api = Blueprint('sheriff_chat_api', __name__, url_prefix='/api')
 
-CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
+OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 
 SYSTEM_PROMPT = """You are the official FAQ assistant for the Deputy Sheriffs' Association (DSA) of San Diego County. You help DSA members and potential members with questions about the organization.
 
@@ -129,7 +129,6 @@ def validate_chat_request(body):
     if not body or not body.get('message'):
         raise ValueError('Message is required')
     user_message = body['message']
-    # Support conversation history from frontend
     history = body.get('history', [])
     return user_message, history
 
@@ -142,10 +141,10 @@ def build_message_history(history, user_message):
         user_message: The current user message string.
 
     Returns:
-        list: Messages array formatted for the Claude API.
+        list: Messages array formatted for the OpenAI API.
     """
-    messages = []
-    for msg in history[-10:]:  # Keep last 10 messages for context
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for msg in history[-10:]:
         messages.append({
             "role": msg.get("role", "user"),
             "content": msg.get("content", "")
@@ -154,44 +153,42 @@ def build_message_history(history, user_message):
     return messages
 
 
-def call_claude_api(api_key, messages):
-    """Make the HTTP call to the Claude API.
+def call_openai_api(api_key, messages):
+    """Make the HTTP call to the OpenAI API.
 
     Args:
-        api_key: The Anthropic API key.
-        messages: The messages array to send.
+        api_key: The OpenAI API key.
+        messages: The messages array to send (includes system message).
 
     Returns:
-        requests.Response: The raw HTTP response from Claude.
+        requests.Response: The raw HTTP response from OpenAI.
     """
     return requests.post(
-        CLAUDE_API_URL,
+        OPENAI_API_URL,
         headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
         },
         json={
-            "model": "claude-sonnet-4-20250514",
+            "model": "gpt-4o-mini",
             "max_tokens": 512,
-            "system": SYSTEM_PROMPT,
             "messages": messages,
         },
         timeout=30,
     )
 
 
-def parse_claude_response(response):
-    """Extract the reply text from a Claude API response.
+def parse_openai_response(response):
+    """Extract the reply text from an OpenAI API response.
 
     Args:
-        response: The raw HTTP response from Claude.
+        response: The raw HTTP response from OpenAI.
 
     Returns:
         str: The assistant's reply text.
     """
     data = response.json()
-    return data["content"][0]["text"]
+    return data["choices"][0]["message"]["content"]
 
 
 @sheriff_chat_api.route('/sheriff/chat', methods=['POST'])
@@ -202,21 +199,21 @@ def sheriff_chat():
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
 
-    api_key = app.config.get('CLAUDE_API_KEY')
+    api_key = app.config.get('OPENAI_API_KEY')
     if not api_key:
-        return jsonify({'error': 'Claude API key not configured'}), 500
+        return jsonify({'error': 'OpenAI API key not configured'}), 500
 
     messages = build_message_history(history, user_message)
 
     try:
-        response = call_claude_api(api_key, messages)
+        response = call_openai_api(api_key, messages)
 
         if response.status_code != 200:
             error_detail = response.text
-            print(f"Claude API error: {response.status_code} - {error_detail}")
+            print(f"OpenAI API error: {response.status_code} - {error_detail}")
             return jsonify({'error': 'AI service error', 'detail': error_detail}), 502
 
-        reply = parse_claude_response(response)
+        reply = parse_openai_response(response)
         return jsonify({'reply': reply})
 
     except requests.Timeout:

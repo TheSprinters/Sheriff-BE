@@ -74,5 +74,5 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
-# Claude API settings (for DSA Sheriff chatbot)
-app.config['CLAUDE_API_KEY'] = os.environ.get('CLAUDE_API_KEY') or None
+# OpenAI API settings (for DSA Sheriff chatbot)
+app.config['OPENAI_API_KEY'] = os.environ.get('OPENAI_API_KEY') or None
