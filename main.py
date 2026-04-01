@@ -10,6 +10,25 @@ from __init__ import app, db
 # API endpoints — sheriff only
 from api.sheriff import sheriff_api
 from api.sheriff_chat import sheriff_chat_api
+from api.user import user_api
+from api.study import study_api
+from api.post import post_api
+from api.javascript_exec_api import javascript_exec_api
+from api.api_ainpc import ainpc_api
+from api.python_exec_api import python_exec_api
+from api.persona_api import persona_api
+from api.microblog_api import microblog_api
+from api.gemini_api import gemini_api
+from api.classroom_api import classroom_api
+from api.student import student_api
+from api.analytics import analytics_api
+from api.groq_api import groq_api
+from api.pfp import pfp_api
+from api.section import section_api
+from api.data_export_import_api import data_export_import_api
+from api.grade_api import grade_api
+from api.feedback_api import feedback_api
+from hacks.joke import joke_api
 
 # database Initialization functions
 from model.sheriff import Sheriff, initSheriffs
@@ -27,6 +46,25 @@ load_dotenv()
 # register URIs for api endpoints — sheriff only
 app.register_blueprint(sheriff_api)
 app.register_blueprint(sheriff_chat_api)
+app.register_blueprint(user_api)
+app.register_blueprint(study_api)
+app.register_blueprint(post_api)
+app.register_blueprint(javascript_exec_api)
+app.register_blueprint(ainpc_api)
+app.register_blueprint(python_exec_api)
+app.register_blueprint(persona_api)
+app.register_blueprint(microblog_api)
+app.register_blueprint(gemini_api)
+app.register_blueprint(classroom_api)
+app.register_blueprint(student_api)
+app.register_blueprint(analytics_api)
+app.register_blueprint(groq_api)
+app.register_blueprint(pfp_api)
+app.register_blueprint(section_api)
+app.register_blueprint(data_export_import_api)
+app.register_blueprint(grade_api)
+app.register_blueprint(feedback_api)
+app.register_blueprint(joke_api)
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
@@ -45,6 +83,23 @@ def inject_user():
 @app.route('/')
 def index():
     return render_template("index.html")
+
+@app.route('/auth')
+def auth_status():
+    """Check authentication status for sheriff users."""
+    try:
+        # Import here to avoid circular imports
+        from api.sheriff import decode_sheriff_token
+        sheriff = decode_sheriff_token()
+        return jsonify({
+            "authenticated": True,
+            "user": sheriff.read()
+        })
+    except Exception as e:
+        return jsonify({
+            "authenticated": False,
+            "error": str(e)
+        }), 401
 
 @app.route('/u2table')
 def u2table():
