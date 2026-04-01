@@ -102,9 +102,13 @@ class SheriffAPI:
     class _Authenticate(Resource):
         """Sheriff login endpoint."""
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         @cross_origin(supports_credentials=True)
 >>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
+=======
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
+>>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def post(self):
             try:
                 body = request.get_json()
@@ -148,9 +152,13 @@ class SheriffAPI:
                 return {'message': 'Something went wrong', 'error': str(e)}, 500
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         @cross_origin(supports_credentials=True)
 >>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
+=======
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
+>>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def delete(self):
             """Logout - expire the sheriff cookie."""
             try:
@@ -163,9 +171,13 @@ class SheriffAPI:
     class _ID(Resource):
         """Get current sheriff from token."""
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         @cross_origin(supports_credentials=True)
 >>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
+=======
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
+>>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def get(self):
             try:
                 sheriff = decode_sheriff_token()
@@ -177,9 +189,13 @@ class SheriffAPI:
         """Sheriff user CRUD operations."""
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         @cross_origin(supports_credentials=True)
 >>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
+=======
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
+>>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def post(self):
             """Create a new sheriff user (signup)."""
             try:
@@ -214,9 +230,13 @@ class SheriffAPI:
                 return {'message': f'Error creating sheriff: {str(e)}'}, 500
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         @cross_origin(supports_credentials=True)
 >>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
+=======
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
+>>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def get(self):
             """Get all sheriff users (admin only)."""
             try:
@@ -227,9 +247,13 @@ class SheriffAPI:
                 return e.body, e.status_code
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         @cross_origin(supports_credentials=True)
 >>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
+=======
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
+>>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def put(self):
             """Update sheriff user."""
             try:
@@ -250,9 +274,13 @@ class SheriffAPI:
             return jsonify(target.read())
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         @cross_origin(supports_credentials=True)
 >>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
+=======
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
+>>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def delete(self):
             """Delete sheriff user (admin only)."""
             try:
