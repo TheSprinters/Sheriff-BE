@@ -3,6 +3,7 @@ import jwt
 from flask import Blueprint, request, jsonify, current_app, Response, g
 from flask_restful import Api, Resource
 from datetime import datetime
+from flask_cors import cross_origin
 from __init__ import app, db
 from api.authorize import token_required
 from model.sheriff import Sheriff
@@ -101,6 +102,7 @@ class SheriffAPI:
 
     class _Authenticate(Resource):
         """Sheriff login endpoint."""
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
         def post(self):
             try:
                 body = request.get_json()
@@ -143,6 +145,7 @@ class SheriffAPI:
             except Exception as e:
                 return {'message': 'Something went wrong', 'error': str(e)}, 500
 
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
         def delete(self):
             """Logout - expire the sheriff cookie."""
             try:
@@ -154,6 +157,7 @@ class SheriffAPI:
 
     class _ID(Resource):
         """Get current sheriff from token."""
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
         def get(self):
             try:
                 sheriff = decode_sheriff_token()
@@ -164,6 +168,7 @@ class SheriffAPI:
     class _CRUD(Resource):
         """Sheriff user CRUD operations."""
 
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
         def post(self):
             """Create a new sheriff user (signup)."""
             try:
@@ -197,6 +202,7 @@ class SheriffAPI:
             except Exception as e:
                 return {'message': f'Error creating sheriff: {str(e)}'}, 500
 
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
         def get(self):
             """Get all sheriff users (admin only)."""
             try:
@@ -206,6 +212,7 @@ class SheriffAPI:
             except AuthError as e:
                 return e.body, e.status_code
 
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
         def put(self):
             """Update sheriff user."""
             try:
@@ -225,6 +232,7 @@ class SheriffAPI:
             target.update(body)
             return jsonify(target.read())
 
+        @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
         def delete(self):
             """Delete sheriff user (admin only)."""
             try:

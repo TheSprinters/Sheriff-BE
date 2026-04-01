@@ -38,7 +38,15 @@ cors = CORS(
        'https://dsasd.opencodingsociety.com',
        'https://sheriff.opencodingsociety.com',
    ],
-   methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+   methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+   allow_headers=[
+       "Content-Type", 
+       "Authorization", 
+       "X-Requested-With",
+       "Accept",
+       "Origin"
+   ],
+   expose_headers=["Content-Range", "X-Total-Count"],
 )
 
 
