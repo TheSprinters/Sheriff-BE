@@ -272,11 +272,80 @@
                         <a href="/profile" class="btn-primary">Update Profile</a>
                         <a href="/training" class="btn-primary">Training Portal</a>
                     {% else %}
-                        <a href="/auth" class="btn-primary">Member Login</a>
-                        <a href="/register" class="btn-primary">Request Access</a>
+                        <button onclick="showLoginModal()" class="btn-primary">Member Login</button>
+                        <a href="/admin-signup" class="btn-primary">Request Access</a>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: #162a46; border: 1px solid #1e3352; border-radius: 12px;">
+            <div class="modal-header" style="border-bottom: 1px solid #1e3352;">
+                <h5 class="modal-title" style="color: #fbbf24;">Sheriff Login</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="color: #94a3b8;">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="loginUid" class="form-label" style="color: #cbd5e1;">Username</label>
+                        <input type="text" class="form-control" id="loginUid" name="uid" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="loginPassword" class="form-label" style="color: #cbd5e1;">Password</label>
+                        <input type="password" class="form-control" id="loginPassword" name="password" required>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn-gold">Login</button>
+                        <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showLoginModal() {
+    const modal = new bootstrap.Modal(document.getElementById('loginModal'));
+    modal.show();
+}
+
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        uid: document.getElementById('loginUid').value,
+        password: document.getElementById('loginPassword').value
+    };
+    
+    fetch('https://sheriff.opencodingsociety.com/api/sheriff/authenticate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.user) {
+            // Store token and reload page
+            localStorage.setItem('sheriff_user', JSON.stringify(data.user));
+            window.location.reload();
+        } else {
+            alert(data.message || 'Login failed');
+        }
+    })
+    .catch(error => {
+        console.error('Login error:', error);
+        alert('Login failed. Please try again.');
+    });
+});
+</script>
+
 {% endblock %}
