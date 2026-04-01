@@ -20,7 +20,6 @@ This file retrieves the following information:
 """
 
 from flask import Flask, jsonify, request
-from flask_cors import CORS
 from flask_restful import Api, Resource
 import subprocess
 import platform
@@ -29,7 +28,6 @@ import os
 import re
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins='*')
 
 api = Api(app)
 

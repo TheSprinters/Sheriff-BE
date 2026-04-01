@@ -1,10 +1,8 @@
 # Refactored: Use CRUD naming (read, create) in InfoModel
 from flask import Flask, jsonify, request
-from flask_cors import CORS
 from flask_restful import Api, Resource
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins='*')
 
 api = Api(app)
 
