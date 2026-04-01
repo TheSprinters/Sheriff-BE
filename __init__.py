@@ -39,7 +39,8 @@ allowed_origins = [
     'http://127.0.0.1:4000',
     'https://open-coding-society.github.io',
     # Regex pattern to match any subdomain of opencodingsociety.com
-    r'https://.*\.opencodingsociety\.com',
+    'https://dsasd.opencodingsociety.com',
+    'https://sheriff.opencodingsociety.com',
     'https://opencodingsociety.com',
 ]
 
