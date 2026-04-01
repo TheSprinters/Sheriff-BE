@@ -21,17 +21,8 @@ app.config['JSON_AS_ASCII'] = False
 
 
 # Allowed servers for cross-origin resource sharing (CORS)
-# Basic CORS for OPTIONS requests
-CORS(app, resources={
-    r"/api/*": {
-        "origins": [
-            'https://dsasd.opencodingsociety.com',
-            'https://sheriff.opencodingsociety.com'
-        ],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"]
-    }
-})
+# Removed global CORS - using @cross_origin decorators on individual endpoints only
+# to avoid conflicts with credentials mode
 
 
 # Browser settings
