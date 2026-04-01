@@ -1,6 +1,6 @@
 # imports from flask
 from flask import redirect, render_template, request, url_for, jsonify, current_app, g
-from flask_login import current_user, login_user, logout_user, LoginManager
+from flask_login import current_user, login_user, logout_user, LoginManager, login_required
 from flask.cli import AppGroup
 from dotenv import load_dotenv
 
@@ -102,8 +102,20 @@ def auth_status():
         }), 401
 
 @app.route('/u2table')
+@login_required
 def u2table():
-    return "u2table page"
+    users = Sheriff.query.all()
+    return render_template("u2table.html", user_data=users)
+
+@app.route('/admin-signup')
+def admin_signup():
+    """Admin signup page for creating initial admin user."""
+    return render_template("admin_signup.html")
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 
 @app.errorhandler(404)

@@ -101,6 +101,10 @@ class SheriffAPI:
 
     class _Authenticate(Resource):
         """Sheriff login endpoint."""
+<<<<<<< HEAD
+=======
+        @cross_origin(supports_credentials=True)
+>>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
         def post(self):
             try:
                 body = request.get_json()
@@ -143,6 +147,10 @@ class SheriffAPI:
             except Exception as e:
                 return {'message': 'Something went wrong', 'error': str(e)}, 500
 
+<<<<<<< HEAD
+=======
+        @cross_origin(supports_credentials=True)
+>>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
         def delete(self):
             """Logout - expire the sheriff cookie."""
             try:
@@ -154,6 +162,10 @@ class SheriffAPI:
 
     class _ID(Resource):
         """Get current sheriff from token."""
+<<<<<<< HEAD
+=======
+        @cross_origin(supports_credentials=True)
+>>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
         def get(self):
             try:
                 sheriff = decode_sheriff_token()
@@ -164,6 +176,10 @@ class SheriffAPI:
     class _CRUD(Resource):
         """Sheriff user CRUD operations."""
 
+<<<<<<< HEAD
+=======
+        @cross_origin(supports_credentials=True)
+>>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
         def post(self):
             """Create a new sheriff user (signup)."""
             try:
@@ -197,6 +213,10 @@ class SheriffAPI:
             except Exception as e:
                 return {'message': f'Error creating sheriff: {str(e)}'}, 500
 
+<<<<<<< HEAD
+=======
+        @cross_origin(supports_credentials=True)
+>>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
         def get(self):
             """Get all sheriff users (admin only)."""
             try:
@@ -206,6 +226,10 @@ class SheriffAPI:
             except AuthError as e:
                 return e.body, e.status_code
 
+<<<<<<< HEAD
+=======
+        @cross_origin(supports_credentials=True)
+>>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
         def put(self):
             """Update sheriff user."""
             try:
@@ -225,6 +249,10 @@ class SheriffAPI:
             target.update(body)
             return jsonify(target.read())
 
+<<<<<<< HEAD
+=======
+        @cross_origin(supports_credentials=True)
+>>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
         def delete(self):
             """Delete sheriff user (admin only)."""
             try:
