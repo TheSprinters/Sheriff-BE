@@ -1,0 +1,147 @@
+{% extends "layouts/base.html" %}
+
+{% block head %}
+<style>
+    .signup-container {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 20px;
+        background: rgba(22, 42, 70, 0.9);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .form-control {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #e2e8f0;
+        margin-bottom: 15px;
+    }
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: #fbbf24;
+        box-shadow: 0 0 0 0.2rem rgba(251, 191, 36, 0.25);
+    }
+    .btn-gold {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border: none;
+        color: #1e3a5f;
+        font-weight: 700;
+        padding: 12px 30px;
+        border-radius: 8px;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+    .btn-gold:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="signup-container">
+        <h2 class="text-center mb-4" style="color: #fbbf24; font-weight: 700;">Admin Signup</h2>
+        <p class="text-center mb-4" style="color: #94a3b8;">Create the initial administrator account for DSA Portal</p>
+        
+        <form id="adminSignupForm">
+            <div class="mb-3">
+                <label for="name" class="form-label" style="color: #cbd5e1;">Full Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="uid" class="form-label" style="color: #cbd5e1;">Username</label>
+                <input type="text" class="form-control" id="uid" name="uid" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="sheriff_id" class="form-label" style="color: #cbd5e1;">Sheriff ID / Badge Number</label>
+                <input type="text" class="form-control" id="sheriff_id" name="sheriff_id" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label" style="color: #cbd5e1;">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label" style="color: #cbd5e1;">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="rank" class="form-label" style="color: #cbd5e1;">Rank</label>
+                <select class="form-control" id="rank" name="rank" required>
+                    <option value="Captain">Captain</option>
+                    <option value="Lieutenant">Lieutenant</option>
+                    <option value="Sergeant">Sergeant</option>
+                    <option value="Deputy">Deputy</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="station" class="form-label" style="color: #cbd5e1;">Station</label>
+                <input type="text" class="form-control" id="station" name="station" value="DSA Headquarters - Poway" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="phone" class="form-label" style="color: #cbd5e1;">Phone (Optional)</label>
+                <input type="tel" class="form-control" id="phone" name="phone">
+            </div>
+            
+            <button type="submit" class="btn-gold">Create Admin Account</button>
+        </form>
+        
+        <div class="text-center mt-3">
+            <a href="/" style="color: #60a5fa;">← Back to Login</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('adminSignupForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            name: document.getElementById('name').value,
+            uid: document.getElementById('uid').value,
+            sheriff_id: document.getElementById('sheriff_id').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            rank: document.getElementById('rank').value,
+            station: document.getElementById('station').value,
+            phone: document.getElementById('phone').value,
+            role: 'Admin'
+        };
+        
+        fetch('/api/sheriff/user', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message && data.message.includes('already exists')) {
+                alert('Username or Sheriff ID already exists. Please try different credentials.');
+            } else if (data.id) {
+                alert('Admin account created successfully! You can now login.');
+                window.location.href = '/auth';
+            } else {
+                alert('Error creating account: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating admin account. Please try again.');
+        });
+    });
+</script>
+
+{% endblock %}
+
+{% block background %}
+{% endblock %}
