@@ -13,33 +13,14 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
     }
 
-    # Proxy all other traffic to Flask app on 8587
+    # Proxy all other traffic to Flask — let Flask-CORS handle all CORS headers
     location / {
         proxy_pass http://localhost:8325;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
-        set $cors_origin "";
-        if ($http_origin ~* "^https://(.*\.)?opencodingsociety\.com$") {
-            set $cors_origin $http_origin;
-        }
-        if ($http_origin = "https://open-coding-society.github.io") {
-            set $cors_origin $http_origin;
-        }
-        if ($http_origin = "https://dsasd.opencodingsociety.com") {
-            set $cors_origin $http_origin;
-        }
-
-        add_header "Access-Control-Allow-Origin" "$cors_origin" always;
-        add_header "Access-Control-Allow-Credentials" "true" always;
-
-        if ($request_method = OPTIONS) {
-            add_header "Access-Control-Allow-Origin" "$cors_origin" always;
-            add_header "Access-Control-Allow-Credentials" "true" always;
-            add_header "Access-Control-Allow-Methods" "GET, POST, PUT, DELETE, OPTIONS, HEAD" always;
-            add_header "Access-Control-Allow-MaxAge" 600 always;
-            add_header "Access-Control-Allow-Headers" "Authorization, Origin, X-Origin, X-Requested-With, Content-Type, Accept" always;
-            return 204;
-        }
+        #  No CORS headers here — Flask-CORS handles it
     }
 }
