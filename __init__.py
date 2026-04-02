@@ -1,6 +1,5 @@
 from flask import Flask
 from flask_login import LoginManager
-from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
@@ -14,8 +13,20 @@ load_dotenv()
 # Setup of key Flask object (app)
 app = Flask(__name__)
 
-# Configure Flask Port, default to 8587 which is same as Docker setup
-app.config['FLASK_PORT'] = int(os.environ.get('FLASK_PORT') or 8587)
+# Initialize Flask-SocketIO for real-time multiplayer
+# CORS is set to * to allow all origins for socket connections
+# async_mode is set to 'eventlet' for production (gunicorn with eventlet worker)
+# Falls back to 'threading' in development if eventlet is not available
+try:
+    import eventlet
+    eventlet.monkey_patch()
+    async_mode = 'eventlet'
+except ImportError:
+    async_mode = 'threading'
+
+
+# Configure Flask Port, default to 8301 which is same as Docker setup
+app.config['FLASK_PORT'] = int(os.environ.get('FLASK_PORT') or 8325)
 
 # Configure Flask to handle JSON with UTF-8 encoding versus default ASCII
 app.config['JSON_AS_ASCII'] = False  # Allow emojis, non-ASCII characters in JSON responses
@@ -25,57 +36,28 @@ app.config['JSON_AS_ASCII'] = False  # Allow emojis, non-ASCII characters in JSO
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-
-# Allowed servers for cross-origin resource sharing (CORS)
-# Static allowed origins for local development
-allowed_origins = [
-    'http://localhost:4500',
-    'http://127.0.0.1:4500',
-    'http://localhost:4599',
-    'http://127.0.0.1:4599',
-    'http://localhost:4600',
-    'http://127.0.0.1:4600',
-    'http://localhost:4000',
-    'http://127.0.0.1:4000',
-    'https://open-coding-society.github.io',
-    # Regex pattern to match any subdomain of opencodingsociety.com
-    'https://dsasd.opencodingsociety.com',
-    'https://sheriff.opencodingsociety.com',
-    'https://opencodingsociety.com',
-]
-
-# Global CORS REMOVED - using @cross_origin decorators on individual endpoints only
-# to avoid wildcard origin conflicts with credentials
-
+# NOTE: CORS is configured in main.py with full settings
+# Do not initialize CORS here to avoid duplicate configuration
 
 # Admin Defaults
 app.config['ADMIN_USER'] = os.environ.get('ADMIN_USER') or 'Admin Name'
 app.config['ADMIN_UID'] = os.environ.get('ADMIN_UID') or 'admin'
 app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD') or os.environ.get('DEFAULT_PASSWORD') or 'password'
 app.config['ADMIN_PFP'] = os.environ.get('ADMIN_PFP') or 'default.png'
-# Teacher Defaults
-app.config['TEACHER_USER'] = os.environ.get('TEACHER_USER') or 'Teacher Name'
-app.config['TEACHER_UID'] = os.environ.get('TEACHER_UID') or 'teacher'
-app.config['TEACHER_PASSWORD'] = os.environ.get('TEACHER_PASSWORD') or os.environ.get('DEFAULT_PASSWORD') or 'password'
-app.config['TEACHER_PFP'] = os.environ.get('TEACHER_PFP') or 'default.png'
+
 # Default User Defaults
-app.config['USER_NAME'] = os.environ.get('USER_NAME') or 'User Name'
-app.config['USER_UID'] = os.environ.get('USER_UID') or 'user'
-app.config['USER_PASSWORD'] = os.environ.get('USER_PASSWORD') or os.environ.get('DEFAULT_PASSWORD') or 'password'
-app.config['USER_PFP'] = os.environ.get('USER_PFP') or 'default.png'
-# Defaults
+app.config['DEFAULT_USER'] = os.environ.get('DEFAULT_USER') or 'User Name'
+app.config['DEFAULT_UID'] = os.environ.get('DEFAULT_UID') or 'user'
+app.config['DEFAULT_USER_PASSWORD'] = os.environ.get('DEFAULT_USER_PASSWORD') or os.environ.get('DEFAULT_PASSWORD') or 'password'
+app.config['DEFAULT_USER_PFP'] = os.environ.get('DEFAULT_USER_PFP') or 'default.png'
+# Reset Defaults
 app.config['DEFAULT_PASSWORD'] = os.environ.get('DEFAULT_PASSWORD') or 'password'
 app.config['DEFAULT_PFP'] = os.environ.get('DEFAULT_PFP') or 'default.png'
-# Convenience user
-app.config['MY_NAME'] = os.environ.get('MY_NAME') or 'convenience'
-app.config['MY_UID'] = os.environ.get('MY_UID') or 'convenience'
-app.config['MY_PASSWORD'] = os.environ.get('MY_PASSWORD') or os.environ.get('DEFAULT_PASSWORD') or 'password'
-app.config['MY_PFP'] = os.environ.get('MY_PFP') or 'default.png'
-app.config['MY_ROLE'] = os.environ.get('MY_ROLE') or 'User'
+
 
 
 # Browser settings
-SECRET_KEY = os.environ.get('SECRET_KEY') or 'SECRET_KEY' # secret key for session management
+SECRET_KEY = os.environ.get('SECRET_KEY') or 'SECRET_KEY'  # secret key for session management
 SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME') or 'sess_python_flask'
 JWT_TOKEN_NAME = os.environ.get('JWT_TOKEN_NAME') or 'jwt_python_flask'
 app.config['SECRET_KEY'] = SECRET_KEY
@@ -85,7 +67,7 @@ app.config['JWT_TOKEN_NAME'] = JWT_TOKEN_NAME
 
 
 # Database settings
-IS_PRODUCTION = os.environ.get('IS_PRODUCTION') or None
+
 dbName = 'user_management'
 DB_ENDPOINT = os.environ.get('DB_ENDPOINT') or None
 DB_USERNAME = os.environ.get('DB_USERNAME') or None
@@ -102,6 +84,7 @@ else:
    dbString = 'sqlite:///volumes/'
    dbURI = dbString + dbName + '.db'
    backupURI = dbString + dbName + '_bak.db'
+
 # Set database configuration in Flask app
 app.config['DB_ENDPOINT'] = DB_ENDPOINT
 app.config['DB_USERNAME'] = DB_USERNAME
