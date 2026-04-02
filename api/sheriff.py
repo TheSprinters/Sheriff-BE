@@ -1,8 +1,9 @@
-"""Sheriff API endpoints for the Deputy Sheriffs' Association portal."""
+"""Sheriff API endpoints for Deputy Sheriffs' Association portal."""
 import jwt
 from flask import Blueprint, request, jsonify, current_app, Response, g
 from flask_restful import Api, Resource
 from datetime import datetime
+from flask_cors import cross_origin
 from __init__ import app, db
 from api.authorize import token_required
 from model.sheriff import Sheriff
@@ -13,38 +14,28 @@ api = Api(sheriff_api)
 
 
 def decode_sheriff_token():
-    """Read jwt_sheriff cookie, decode it, and return the Sheriff object.
-
-    Returns the Sheriff object or raises an appropriate error tuple.
-    """
-    token = request.cookies.get("jwt_sheriff")
+    """Decode JWT token from sheriff cookie."""
+    token = request.cookies.get(app.config['JWT_TOKEN_NAME'])
     if not token:
-        raise AuthError({'message': 'Not authenticated'}, 401)
+        raise AuthError({'message': 'No token provided'}, 401)
+    
     try:
-        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+        decoded = jwt.decode(
+            token,
+            app.config['SECRET_KEY'],
+            algorithms=["HS256"]
+        )
+        return Sheriff.query.get(decoded['uid'])
     except jwt.ExpiredSignatureError:
         raise AuthError({'message': 'Token expired'}, 401)
     except jwt.InvalidTokenError:
         raise AuthError({'message': 'Invalid token'}, 401)
-    sheriff = Sheriff.query.filter_by(_uid=data["_uid"]).first()
-    if not sheriff:
-        raise AuthError({'message': 'Sheriff not found'}, 404)
-    return sheriff
-
-
-def require_admin():
-    """Decode token and verify the sheriff is an admin.
-
-    Returns the Sheriff object or raises 403 if not admin.
-    """
-    sheriff = decode_sheriff_token()
-    if not sheriff.is_admin():
-        raise AuthError({'message': 'Admin access required'}, 403)
-    return sheriff
+    except Exception as e:
+        raise AuthError({'message': 'Token decode error'}, 401)
 
 
 def set_sheriff_cookie(response, token, max_age):
-    """Set the jwt_sheriff cookie with production or dev settings."""
+    """Set jwt_sheriff cookie with production or dev settings."""
     is_production = os.environ.get('IS_PRODUCTION', 'false').lower() == 'true'
     cookie_name = "jwt_sheriff"
     if is_production:
@@ -59,35 +50,26 @@ def set_sheriff_cookie(response, token, max_age):
 
 
 def validate_signup_data(body):
-    """Validate name, uid, sheriff_id, password from the request body.
+    """Validate name, uid, sheriff_id, password from request body.
 
     Returns a validated dict or raises an error tuple.
     """
     if not body:
-        raise AuthError({'message': 'No data provided'}, 400)
-
-    name = body.get('name')
-    if not name or len(name) < 2:
-        raise AuthError({'message': 'Name is missing or too short'}, 400)
-
-    uid = body.get('uid')
-    if not uid or len(uid) < 2:
-        raise AuthError({'message': 'Username is missing or too short'}, 400)
-
-    sheriff_id = body.get('sheriff_id')
-    if not sheriff_id:
-        raise AuthError({'message': 'Sheriff ID / Badge Number is required'}, 400)
-
-    password = body.get('password', 'sheriff123')
-    if len(password) < 8:
-        raise AuthError({'message': 'Password must be at least 8 characters'}, 400)
-
-    return {
-        'name': name,
-        'uid': uid,
-        'sheriff_id': sheriff_id,
-        'password': password,
-    }
+        raise AuthError({'message': 'No request body provided'}, 400)
+    
+    required_fields = ['name', 'uid', 'sheriff_id', 'password']
+    for field in required_fields:
+        if not body.get(field):
+            raise AuthError({'message': f'{field} is required'}, 400)
+    
+    # Basic validation
+    if len(body['uid']) < 3:
+        raise AuthError({'message': 'Username must be at least 3 characters'}, 400)
+    
+    if len(body['password']) < 6:
+        raise AuthError({'message': 'Password must be at least 6 characters'}, 400)
+    
+    return body
 
 
 class AuthError(Exception):
@@ -101,14 +83,7 @@ class SheriffAPI:
 
     class _Authenticate(Resource):
         """Sheriff login endpoint."""
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        @cross_origin(supports_credentials=True)
->>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
-=======
         @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
->>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def post(self):
             try:
                 body = request.get_json()
@@ -122,43 +97,44 @@ class SheriffAPI:
                 if not password:
                     return {'message': 'Password is missing'}, 401
 
+                # Query sheriff from database
                 sheriff = Sheriff.query.filter_by(_uid=uid).first()
-                if sheriff is None or not sheriff.is_password(password):
-                    return {'message': 'Invalid username or password'}, 401
+                if not sheriff:
+                    return {'message': 'Invalid credentials'}, 401
 
-                token = jwt.encode(
-                    {"_uid": sheriff._uid, "_type": "sheriff"},
-                    current_app.config["SECRET_KEY"],
-                    algorithm="HS256"
-                )
+                # Verify password
+                if sheriff.check_password(password):
+                    # Generate JWT token
+                    token = jwt.encode({
+                        'uid': sheriff.uid,
+                        'exp': datetime.utcnow() + datetime.timedelta(hours=12)
+                    }, app.config['SECRET_KEY'], algorithm="HS256")
 
-                response_data = {
-                    "message": f"Authentication for {sheriff._uid} successful",
-                    "user": {
-                        "uid": sheriff._uid,
-                        "name": sheriff.name,
-                        "sheriff_id": sheriff.sheriff_id,
-                        "rank": sheriff.rank,
-                        "station": sheriff.station,
-                        "role": sheriff.role,
-                        "status": sheriff.status,
+                    response_data = {
+                        "message": "Login successful",
+                        "user": {
+                            "id": sheriff.id,
+                            "uid": sheriff.uid,
+                            "name": sheriff.name,
+                            "email": sheriff.email,
+                            "sheriff_id": sheriff.sheriff_id,
+                            "rank": sheriff.rank,
+                            "station": sheriff.station,
+                            "phone": sheriff.phone,
+                            "role": sheriff.role,
+                            "status": sheriff.status,
+                        }
                     }
-                }
-                resp = jsonify(response_data)
-                set_sheriff_cookie(resp, token, 43200)
-                return resp
+                    resp = jsonify(response_data)
+                    set_sheriff_cookie(resp, token, 43200)
+                    return resp
+                else:
+                    return {'message': 'Invalid credentials'}, 401
 
             except Exception as e:
                 return {'message': 'Something went wrong', 'error': str(e)}, 500
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        @cross_origin(supports_credentials=True)
->>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
-=======
         @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
->>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def delete(self):
             """Logout - expire the sheriff cookie."""
             try:
@@ -170,14 +146,7 @@ class SheriffAPI:
 
     class _ID(Resource):
         """Get current sheriff from token."""
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        @cross_origin(supports_credentials=True)
->>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
-=======
         @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
->>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def get(self):
             try:
                 sheriff = decode_sheriff_token()
@@ -188,14 +157,7 @@ class SheriffAPI:
     class _CRUD(Resource):
         """Sheriff user CRUD operations."""
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        @cross_origin(supports_credentials=True)
->>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
-=======
         @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
->>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def post(self):
             """Create a new sheriff user (signup)."""
             try:
@@ -209,16 +171,14 @@ class SheriffAPI:
                 name=validated['name'],
                 uid=validated['uid'],
                 sheriff_id=validated['sheriff_id'],
+                email=validated['email'],
                 password=validated['password'],
-                email=body.get('email', ''),
-                rank=body.get('rank', 'Deputy'),
-                station=body.get('station', 'San Diego Central'),
-                phone=body.get('phone', ''),
-                years_of_service=body.get('years_of_service', 0),
-                date_of_hire=_date.fromisoformat(body['date_of_hire']) if body.get('date_of_hire') else None,
-                date_of_birth=_date.fromisoformat(body['date_of_birth']) if body.get('date_of_birth') else None,
-                specialization=body.get('specialization', ''),
-                bio=body.get('bio', ''),
+                rank=validated.get('rank', 'Deputy'),
+                station=validated.get('station', 'San Diego County'),
+                phone=validated.get('phone', ''),
+                role=validated.get('role', 'Member'),
+                status=validated.get('status', 'Active'),
+                created_date=_date.today()
             )
 
             try:
@@ -229,14 +189,7 @@ class SheriffAPI:
             except Exception as e:
                 return {'message': f'Error creating sheriff: {str(e)}'}, 500
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        @cross_origin(supports_credentials=True)
->>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
-=======
         @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
->>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def get(self):
             """Get all sheriff users (admin only)."""
             try:
@@ -246,14 +199,7 @@ class SheriffAPI:
             except AuthError as e:
                 return e.body, e.status_code
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        @cross_origin(supports_credentials=True)
->>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
-=======
         @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
->>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def put(self):
             """Update sheriff user."""
             try:
@@ -273,14 +219,7 @@ class SheriffAPI:
             target.update(body)
             return jsonify(target.read())
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        @cross_origin(supports_credentials=True)
->>>>>>> ef195998f9f26dc543cc558896c375c8f91977b5
-=======
         @cross_origin(supports_credentials=True, origins=['https://dsasd.opencodingsociety.com', 'https://sheriff.opencodingsociety.com'])
->>>>>>> 13cd5867d61cc5455fb8cdbd8646b62cb722289c
         def delete(self):
             """Delete sheriff user (admin only)."""
             try:
@@ -291,16 +230,21 @@ class SheriffAPI:
                 return e.body, e.status_code
 
             body = request.get_json()
-            uid = body.get('uid')
-            target = Sheriff.query.filter_by(_uid=uid).first()
+            if not body.get('uid'):
+                return {'message': 'User ID required for deletion'}, 400
+
+            target = Sheriff.query.filter_by(_uid=body['uid']).first()
             if not target:
-                return {'message': f'Sheriff {uid} not found'}, 404
+                return {'message': 'Sheriff not found'}, 404
 
-            target_data = target.read()
-            target.delete()
-            return jsonify({'message': f'Deleted sheriff: {target_data["name"]}'}), 200
+            try:
+                target.delete()
+                return {'message': 'Sheriff deleted successfully'}
+            except Exception as e:
+                return {'message': f'Error deleting sheriff: {str(e)}'}, 500
 
-    # Register endpoints
-    api.add_resource(_Authenticate, '/sheriff/authenticate')
-    api.add_resource(_ID, '/sheriff/id')
-    api.add_resource(_CRUD, '/sheriff/user')
+
+# Register API endpoints
+api.add_resource(SheriffAPI._Authenticate, '/sheriff/authenticate')
+api.add_resource(SheriffAPI._ID, '/sheriff/id')
+api.add_resource(SheriffAPI._CRUD, '/sheriff/user')
