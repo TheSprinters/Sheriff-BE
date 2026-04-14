@@ -1,6 +1,5 @@
-from flask import Flask
+from flask import Flask, request, Response
 from flask_login import LoginManager
-from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
@@ -37,42 +36,59 @@ app.config['JSON_AS_ASCII'] = False  # Allow emojis, non-ASCII characters in JSO
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# Global CORS configuration (single source of truth)
-CORS(
-    app,
-    supports_credentials=True,
-    origins=[
-        # Local development
-        "http://localhost:8325",
-        "http://127.0.0.1:8325",
-        "http://localhost:4500",
-        "http://127.0.0.1:4500",
-        "http://localhost:4600",
-        "http://127.0.0.1:4600",
-        "http://localhost:4000",
-        "http://127.0.0.1:4000",
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-        "http://localhost:8500",
-        "http://127.0.0.1:8500",
-        # Production deployments - OpenCodingSociety domains
-        "https://pages.opencodingsociety.com",
-        "http://pages.opencodingsociety.com",
-        "https://sheriff.opencodingsociety.com",
-        "http://sheriff.opencodingsociety.com",
-        "https://spring.opencodingsociety.com",
-        "http://spring.opencodingsociety.com",
-        "https://api.opencodingsociety.com",
-        "http://api.opencodingsociety.com",
-        # GitHub Pages
-        "https://open-coding-society.github.io",
-        "https://dsasd.opencodingsociety.com",
-        "https://nighthawkcoders.github.io",
-    ],
-    allow_headers=["Content-Type", "Authorization", "X-Origin", "Cookie", "X-Requested-With", "Accept", "Origin"],
-    expose_headers=["Set-Cookie", "Content-Type"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-)
+# Allowed origins — explicit list, credentials-safe (never wildcard)
+_CORS_ORIGINS = {
+    # Local development
+    "http://localhost:8325", "http://127.0.0.1:8325",
+    "http://localhost:4500",  "http://127.0.0.1:4500",
+    "http://localhost:4600",  "http://127.0.0.1:4600",
+    "http://localhost:4000",  "http://127.0.0.1:4000",
+    "http://localhost:8080",  "http://127.0.0.1:8080",
+    "http://localhost:8500",  "http://127.0.0.1:8500",
+    # Production
+    "https://pages.opencodingsociety.com",
+    "http://pages.opencodingsociety.com",
+    "https://sheriff.opencodingsociety.com",
+    "http://sheriff.opencodingsociety.com",
+    "https://spring.opencodingsociety.com",
+    "http://spring.opencodingsociety.com",
+    "https://api.opencodingsociety.com",
+    "http://api.opencodingsociety.com",
+    "https://open-coding-society.github.io",
+    "https://dsasd.opencodingsociety.com",
+    "https://nighthawkcoders.github.io",
+}
+
+_CORS_ALLOW_HEADERS = "Content-Type, Authorization, X-Origin, Cookie, X-Requested-With, Accept, Origin"
+_CORS_METHODS = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+
+
+@app.before_request
+def _handle_preflight():
+    """Intercept OPTIONS preflight and respond immediately — no wildcard, ever."""
+    if request.method == 'OPTIONS':
+        origin = request.headers.get('Origin', '')
+        resp = Response()
+        resp.status_code = 204
+        if origin in _CORS_ORIGINS:
+            resp.headers['Access-Control-Allow-Origin'] = origin
+            resp.headers['Access-Control-Allow-Credentials'] = 'true'
+            resp.headers['Access-Control-Allow-Methods'] = _CORS_METHODS
+            resp.headers['Access-Control-Allow-Headers'] = _CORS_ALLOW_HEADERS
+            resp.headers['Vary'] = 'Origin'
+        return resp
+
+
+@app.after_request
+def _apply_cors(resp):
+    """Stamp CORS headers on every non-OPTIONS response."""
+    origin = request.headers.get('Origin', '')
+    if origin in _CORS_ORIGINS:
+        resp.headers['Access-Control-Allow-Origin'] = origin
+        resp.headers['Access-Control-Allow-Credentials'] = 'true'
+        resp.headers['Access-Control-Expose-Headers'] = 'Set-Cookie, Content-Type'
+        resp.headers['Vary'] = 'Origin'
+    return resp
 
 # Admin Defaults
 app.config['ADMIN_USER'] = os.environ.get('ADMIN_USER') or 'Admin Name'

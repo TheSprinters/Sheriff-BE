@@ -1,44 +1,58 @@
+# Redirect HTTP → HTTPS
 server {
     listen 80;
     listen [::]:80;
     server_name sheriff.opencodingsociety.com;
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS — actual traffic
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name sheriff.opencodingsociety.com;
+
+    # SSL — managed by certbot; paths filled in automatically
+    # ssl_certificate     /etc/letsencrypt/live/sheriff.opencodingsociety.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/sheriff.opencodingsociety.com/privkey.pem;
+    # include             /etc/letsencrypt/options-ssl-nginx.conf;
+    # ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
     location / {
-        # CORS allowlist with credentials support (no wildcard)
+        # Build the reflected origin (empty string if origin not in allowlist)
         set $cors_origin "";
-        if ($http_origin ~* "^https://(dsasd|sheriff)\\.opencodingsociety\\.com$") {
+        if ($http_origin ~* "^https?://(localhost(:[0-9]+)?|127\.0\.0\.1(:[0-9]+)?|dsasd\.opencodingsociety\.com|sheriff\.opencodingsociety\.com|pages\.opencodingsociety\.com|spring\.opencodingsociety\.com|api\.opencodingsociety\.com|open-coding-society\.github\.io|nighthawkcoders\.github\.io)$") {
             set $cors_origin $http_origin;
         }
 
-        # Handle preflight requests directly
+        # Handle preflight directly — never touches Flask
         if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' $cors_origin always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS, PATCH' always;
-            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Origin, Cookie, X-Requested-With, Accept, Origin' always;
+            add_header 'Access-Control-Allow-Origin'      $cors_origin always;
+            add_header 'Access-Control-Allow-Credentials' 'true'       always;
+            add_header 'Access-Control-Allow-Methods'     'GET, POST, PUT, DELETE, OPTIONS, PATCH' always;
+            add_header 'Access-Control-Allow-Headers'     'Content-Type, Authorization, X-Origin, Cookie, X-Requested-With, Accept, Origin' always;
             add_header 'Vary' 'Origin' always;
             return 204;
         }
 
-        proxy_pass http://localhost:8325;
+        proxy_pass         http://localhost:8325;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        # Pass the Origin header to Flask so Flask-CORS can handle it
-        proxy_set_header Origin $http_origin;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   Origin            $http_origin;
 
-        # Strip upstream CORS headers and set our own
+        # Strip whatever Flask sets so we control headers here
         proxy_hide_header Access-Control-Allow-Origin;
         proxy_hide_header Access-Control-Allow-Credentials;
         proxy_hide_header Access-Control-Allow-Methods;
         proxy_hide_header Access-Control-Allow-Headers;
+        proxy_hide_header Access-Control-Expose-Headers;
 
-        add_header 'Access-Control-Allow-Origin' $cors_origin always;
-        add_header 'Access-Control-Allow-Credentials' 'true' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS, PATCH' always;
-        add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Origin, Cookie, X-Requested-With, Accept, Origin' always;
+        add_header 'Access-Control-Allow-Origin'      $cors_origin always;
+        add_header 'Access-Control-Allow-Credentials' 'true'       always;
+        add_header 'Access-Control-Expose-Headers'    'Set-Cookie, Content-Type' always;
         add_header 'Vary' 'Origin' always;
     }
-} 
+}
