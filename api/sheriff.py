@@ -37,7 +37,7 @@ def decode_sheriff_token():
 def set_sheriff_cookie(response, token, max_age):
     """Set jwt_sheriff cookie with production or dev settings."""
     is_production = os.environ.get('IS_PRODUCTION', 'false').lower() == 'true'
-    cookie_name = "jwt_sheriff"
+    cookie_name = app.config['JWT_TOKEN_NAME']
     if is_production:
         response.set_cookie(cookie_name, token, max_age=max_age,
                             secure=True, httponly=True, path='/',
