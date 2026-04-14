@@ -2,7 +2,7 @@
 import jwt
 from flask import Blueprint, request, jsonify, current_app, Response, g
 from flask_restful import Api, Resource
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_cors import cross_origin
 from __init__ import app, db
 from api.authorize import token_required
@@ -25,7 +25,10 @@ def decode_sheriff_token():
             app.config['SECRET_KEY'],
             algorithms=["HS256"]
         )
-        return Sheriff.query.get(decoded['uid'])
+        uid = decoded.get('uid') or decoded.get('_uid')
+        if not uid:
+            raise AuthError({'message': 'Token missing uid'}, 401)
+        return Sheriff.query.filter_by(_uid=uid).first()
     except jwt.ExpiredSignatureError:
         raise AuthError({'message': 'Token expired'}, 401)
     except jwt.InvalidTokenError:
@@ -107,7 +110,7 @@ class SheriffAPI:
                     # Generate JWT token
                     token = jwt.encode({
                         'uid': sheriff.uid,
-                        'exp': datetime.utcnow() + datetime.timedelta(hours=12)
+                        'exp': datetime.utcnow() + timedelta(hours=12)
                     }, app.config['SECRET_KEY'], algorithm="HS256")
 
                     response_data = {
