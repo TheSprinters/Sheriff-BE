@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_login import LoginManager
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
@@ -36,9 +37,42 @@ app.config['JSON_AS_ASCII'] = False  # Allow emojis, non-ASCII characters in JSO
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-#
-# CORS is configured in main.py with the full, authoritative settings.
-# Do not initialize CORS here to avoid duplicate/contradicting headers.
+# Global CORS configuration (single source of truth)
+CORS(
+    app,
+    supports_credentials=True,
+    origins=[
+        # Local development
+        "http://localhost:8325",
+        "http://127.0.0.1:8325",
+        "http://localhost:4500",
+        "http://127.0.0.1:4500",
+        "http://localhost:4600",
+        "http://127.0.0.1:4600",
+        "http://localhost:4000",
+        "http://127.0.0.1:4000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://localhost:8500",
+        "http://127.0.0.1:8500",
+        # Production deployments - OpenCodingSociety domains
+        "https://pages.opencodingsociety.com",
+        "http://pages.opencodingsociety.com",
+        "https://sheriff.opencodingsociety.com",
+        "http://sheriff.opencodingsociety.com",
+        "https://spring.opencodingsociety.com",
+        "http://spring.opencodingsociety.com",
+        "https://api.opencodingsociety.com",
+        "http://api.opencodingsociety.com",
+        # GitHub Pages
+        "https://open-coding-society.github.io",
+        "https://dsasd.opencodingsociety.com",
+        "https://nighthawkcoders.github.io",
+    ],
+    allow_headers=["Content-Type", "Authorization", "X-Origin", "Cookie", "X-Requested-With", "Accept", "Origin"],
+    expose_headers=["Set-Cookie", "Content-Type"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+)
 
 # Admin Defaults
 app.config['ADMIN_USER'] = os.environ.get('ADMIN_USER') or 'Admin Name'

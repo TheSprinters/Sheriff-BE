@@ -3,7 +3,6 @@ from flask import redirect, render_template, request, url_for, jsonify, current_
 from flask_login import current_user, login_user, logout_user, LoginManager, login_required
 from flask.cli import AppGroup
 from dotenv import load_dotenv
-from flask_cors import CORS
 
 # import "objects" from "this" project
 from __init__ import app, db
@@ -43,42 +42,6 @@ import os
 
 # Load environment variables
 load_dotenv()
-
-CORS(
-    app,
-    supports_credentials=True,
-    origins=[
-        # Local development
-        "http://localhost:8325",
-        "http://127.0.0.1:8325",
-        "http://localhost:4500",
-        "http://127.0.0.1:4500",
-        "http://localhost:4600",
-        "http://127.0.0.1:4600",
-        "http://localhost:4000",
-        "http://127.0.0.1:4000",
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-        "http://localhost:8500",
-        "http://127.0.0.1:8500",
-        # Production deployments - OpenCodingSociety domains
-        "https://pages.opencodingsociety.com",
-        "http://pages.opencodingsociety.com",
-        "https://sheriff.opencodingsociety.com",
-        "http://sheriff.opencodingsociety.com",
-        "https://spring.opencodingsociety.com",
-        "http://spring.opencodingsociety.com",
-        "https://api.opencodingsociety.com",
-        "http://api.opencodingsociety.com",
-        # GitHub Pages
-        "https://open-coding-society.github.io",
-        "https://dsasd.opencodingsociety.com",
-        "https://nighthawkcoders.github.io",
-    ],
-    allow_headers=["Content-Type", "Authorization", "X-Origin", "Cookie", "X-Requested-With", "Accept"],
-    expose_headers=["Set-Cookie", "Content-Type"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-)
 
 # register URIs for api endpoints — sheriff only
 app.register_blueprint(sheriff_api)
