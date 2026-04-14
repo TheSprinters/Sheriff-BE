@@ -1,6 +1,5 @@
 from flask import Flask
 from flask_login import LoginManager
-from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
@@ -37,21 +36,9 @@ app.config['JSON_AS_ASCII'] = False  # Allow emojis, non-ASCII characters in JSO
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# Global CORS REMOVED - using @cross_origin decorators on individual endpoints only
-# to avoid wildcard origin conflicts with credentials
-
-# Simple CORS for basic OPTIONS handling
-CORS(app, resources={
-    r"/api/*": {
-        "origins": [
-            'https://dsasd.opencodingsociety.com',
-            'https://sheriff.opencodingsociety.com'
-        ],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
-        "supports_credentials": False  # False for OPTIONS, True for actual endpoints
-    }
-})
+#
+# CORS is configured in main.py with the full, authoritative settings.
+# Do not initialize CORS here to avoid duplicate/contradicting headers.
 
 # Admin Defaults
 app.config['ADMIN_USER'] = os.environ.get('ADMIN_USER') or 'Admin Name'
