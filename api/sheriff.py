@@ -81,6 +81,14 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
+def require_admin():
+    """Verify the current user is an admin. Raises AuthError if not."""
+    sheriff = decode_sheriff_token()
+    if not sheriff or not sheriff.is_admin():
+        raise AuthError({'message': 'Admin access required'}, 403)
+    return sheriff
+
+
 class SheriffAPI:
 
     class _Authenticate(Resource):
@@ -104,7 +112,7 @@ class SheriffAPI:
                     return {'message': 'Invalid credentials'}, 401
 
                 # Verify password
-                if sheriff.check_password(password):
+                if sheriff.is_password(password):
                     # Generate JWT token
                     token = jwt.encode({
                         'uid': sheriff.uid,
@@ -164,19 +172,17 @@ class SheriffAPI:
             except AuthError as e:
                 return e.body, e.status_code
 
-            from datetime import date as _date
             sheriff = Sheriff(
                 name=validated['name'],
                 uid=validated['uid'],
                 sheriff_id=validated['sheriff_id'],
-                email=validated['email'],
+                email=validated.get('email', ''),
                 password=validated['password'],
                 rank=validated.get('rank', 'Deputy'),
                 station=validated.get('station', 'San Diego County'),
                 phone=validated.get('phone', ''),
-                role=validated.get('role', 'Member'),
-                status=validated.get('status', 'Active'),
-                created_date=_date.today()
+                role='Member',
+                status='Active',
             )
 
             try:
