@@ -18,7 +18,7 @@ def auth_required(roles=None):
     def decorator(func_to_guard):
         @wraps(func_to_guard)
         def decorated(*args, **kwargs):
-            token = request.cookies.get("jwt_sheriff")
+            token = request.cookies.get(current_app.config.get('JWT_TOKEN_NAME', 'jwt_python_flask'))
             if not token:
                 return {
                     "message": "Authentication required. No token found.",
@@ -27,7 +27,8 @@ def auth_required(roles=None):
 
             try:
                 data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
-                user = Sheriff.query.filter_by(_uid=data["_uid"]).first()
+                uid = data.get('uid') or data.get('_uid')
+                user = Sheriff.query.filter_by(_uid=uid).first()
 
                 if user is None:
                     return {

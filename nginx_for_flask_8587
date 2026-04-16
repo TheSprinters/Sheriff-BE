@@ -12,14 +12,15 @@ server {
     listen [::]:443 ssl;
     server_name sheriff.opencodingsociety.com;
 
-    # SSL — managed by certbot; paths filled in automatically
-    # ssl_certificate     /etc/letsencrypt/live/sheriff.opencodingsociety.com/fullchain.pem;
-    # ssl_certificate_key /etc/letsencrypt/live/sheriff.opencodingsociety.com/privkey.pem;
-    # include             /etc/letsencrypt/options-ssl-nginx.conf;
-    # ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
+    # SSL — managed by certbot
+    ssl_certificate     /etc/letsencrypt/live/sheriff.opencodingsociety.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/sheriff.opencodingsociety.com/privkey.pem;
+    include             /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
     location / {
-        # Build the reflected origin (empty string if origin not in allowlist)
+        # Reflect origin only for known allowlisted origins — NEVER use wildcard
+        # when credentials: 'include' is used by the frontend.
         set $cors_origin "";
         if ($http_origin ~* "^https?://(localhost(:[0-9]+)?|127\.0\.0\.1(:[0-9]+)?|dsasd\.opencodingsociety\.com|sheriff\.opencodingsociety\.com|pages\.opencodingsociety\.com|spring\.opencodingsociety\.com|api\.opencodingsociety\.com|open-coding-society\.github\.io|nighthawkcoders\.github\.io)$") {
             set $cors_origin $http_origin;
@@ -43,7 +44,7 @@ server {
         proxy_set_header   X-Forwarded-Proto $scheme;
         proxy_set_header   Origin            $http_origin;
 
-        # Strip whatever Flask sets so we control headers here
+        # Strip whatever Flask sets so Nginx controls CORS headers exclusively
         proxy_hide_header Access-Control-Allow-Origin;
         proxy_hide_header Access-Control-Allow-Credentials;
         proxy_hide_header Access-Control-Allow-Methods;
