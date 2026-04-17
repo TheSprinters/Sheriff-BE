@@ -29,6 +29,7 @@ from api.data_export_import_api import data_export_import_api
 from api.grade_api import grade_api
 from api.feedback_api import feedback_api
 from hacks.joke import joke_api
+from api.admin_api import admin_api
 
 # database Initialization functions
 from model.sheriff import Sheriff, initSheriffs
@@ -65,6 +66,7 @@ app.register_blueprint(data_export_import_api)
 app.register_blueprint(grade_api)
 app.register_blueprint(feedback_api)
 app.register_blueprint(joke_api)
+app.register_blueprint(admin_api)
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
@@ -111,6 +113,16 @@ def u2table():
 def admin_signup():
     """Admin signup page for creating initial admin user."""
     return render_template("admin_signup.html")
+
+@app.route('/admin-login')
+def admin_login():
+    """Admin login page."""
+    return render_template("admin_login.html")
+
+@app.route('/admin-panel')
+def admin_panel():
+    """Admin user-management panel (auth enforced client-side via JWT cookie)."""
+    return render_template("admin_panel.html")
 
 @app.route('/logout')
 def logout():

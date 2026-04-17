@@ -1,0 +1,476 @@
+{% extends "layouts/base.html" %}
+
+{% block head %}
+<style>
+    body { background: #0f1c2e; color: #e2e8f0; }
+
+    .admin-header {
+        background: rgba(22,42,70,.95);
+        border-bottom: 2px solid #fbbf24;
+        padding: 1rem 2rem;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .admin-header h1 { color: #fbbf24; font-size: 1.4rem; font-weight: 700; margin: 0; }
+    .admin-header .meta { color: #94a3b8; font-size: .85rem; }
+
+    .btn-gold   { background:linear-gradient(135deg,#f59e0b,#d97706); border:none; color:#1e3a5f; font-weight:700; border-radius:6px; }
+    .btn-gold:hover { filter:brightness(1.1); }
+    .btn-danger-sm { background:#dc2626; border:none; color:#fff; border-radius:5px; padding:3px 10px; font-size:.8rem; }
+    .btn-edit-sm   { background:#2563eb; border:none; color:#fff; border-radius:5px; padding:3px 10px; font-size:.8rem; }
+    .btn-pw-sm     { background:#7c3aed; border:none; color:#fff; border-radius:5px; padding:3px 10px; font-size:.8rem; }
+
+    table { border-collapse: collapse; width: 100%; }
+    thead th { background:#1e3a5f; color:#fbbf24; border-bottom:2px solid #fbbf24; padding:10px 12px; white-space:nowrap; }
+    tbody tr { border-bottom:1px solid rgba(255,255,255,.07); }
+    tbody tr:hover { background:rgba(255,255,255,.04); }
+    tbody td { padding:8px 12px; vertical-align:middle; }
+
+    .badge-admin  { background:#dc2626; color:#fff; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+    .badge-member { background:#2563eb; color:#fff; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+    .badge-active   { background:#059669; color:#fff; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+    .badge-inactive { background:#6b7280; color:#fff; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+
+    .modal-content { background:#1e3a5f; color:#e2e8f0; border:1px solid rgba(251,191,36,.3); }
+    .modal-header  { border-bottom:1px solid rgba(255,255,255,.1); }
+    .modal-footer  { border-top:1px solid rgba(255,255,255,.1); }
+    .modal-title   { color:#fbbf24; }
+    .form-control, .form-select {
+        background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); color:#e2e8f0;
+    }
+    .form-control:focus, .form-select:focus {
+        background:rgba(255,255,255,.12); border-color:#fbbf24;
+        box-shadow:0 0 0 .2rem rgba(251,191,36,.2); color:#fff;
+    }
+    .form-select option { background:#1e3a5f; }
+    .form-label { color:#94a3b8; font-size:.85rem; }
+
+    #toast-container { position:fixed; bottom:20px; right:20px; z-index:9999; }
+    .toast-msg {
+        padding:12px 20px; border-radius:8px; margin-top:8px;
+        font-size:.9rem; animation:slideIn .3s ease;
+        box-shadow:0 4px 15px rgba(0,0,0,.4);
+    }
+    .toast-msg.success { background:#065f46; border:1px solid #10b981; color:#6ee7b7; }
+    .toast-msg.error   { background:#7f1d1d; border:1px solid #dc2626; color:#fca5a5; }
+    @keyframes slideIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+
+    .search-bar { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15);
+        color:#e2e8f0; border-radius:8px; padding:8px 14px; width:260px; }
+    .search-bar:focus { outline:none; border-color:#fbbf24; }
+    .search-bar::placeholder { color:#64748b; }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Header -->
+<div class="admin-header">
+    <div>
+        <h1>&#9679; Admin Panel <span style="font-size:.75rem;color:#94a3b8;font-weight:400;">— User Management</span></h1>
+        <div class="meta" id="headerMeta">Loading users…</div>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <input class="search-bar" type="text" id="searchInput" placeholder="Search users…">
+        <button class="btn btn-gold btn-sm" onclick="openCreateModal()">+ New User</button>
+        <button class="btn btn-outline-light btn-sm" onclick="adminLogout()">Logout</button>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-3">
+    <div class="table-responsive">
+        <table id="userTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Name</th><th>Username</th><th>Badge #</th>
+                    <th>Email</th><th>Rank</th><th>Station</th>
+                    <th>Role</th><th>Status</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                <tr><td colspan="10" class="text-center py-4" style="color:#64748b;">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── Edit User Modal ── -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit User</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editUserId">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="editName">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" id="editEmail">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Rank</label>
+            <select class="form-select" id="editRank">
+              <option>Captain</option><option>Lieutenant</option>
+              <option>Sergeant</option><option>Deputy</option><option>Trainee</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Role</label>
+            <select class="form-select" id="editRole">
+              <option value="Member">Member</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="editStatus">
+              <option>Active</option><option>Inactive</option><option>Suspended</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Station</label>
+            <input type="text" class="form-control" id="editStation">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-control" id="editPhone">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Specialization</label>
+            <input type="text" class="form-control" id="editSpec">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Years of Service</label>
+            <input type="number" class="form-control" id="editYears" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-gold" onclick="saveEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Change Password Modal ── -->
+<div class="modal fade" id="pwModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Change Password</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="pwUserId">
+        <p style="color:#94a3b8;font-size:.9rem;" id="pwUserLabel"></p>
+        <label class="form-label">New Password</label>
+        <input type="password" class="form-control" id="pwNew" placeholder="Min 6 characters">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-gold" onclick="savePassword()">Update Password</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Create User Modal ── -->
+<div class="modal fade" id="createModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create New User</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Full Name *</label>
+            <input type="text" class="form-control" id="cName">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Username *</label>
+            <input type="text" class="form-control" id="cUid">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Badge / Sheriff ID *</label>
+            <input type="text" class="form-control" id="cSheriffId" placeholder="SD-XXXX">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Password *</label>
+            <input type="password" class="form-control" id="cPassword">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" id="cEmail">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-control" id="cPhone">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Rank</label>
+            <select class="form-select" id="cRank">
+              <option>Deputy</option><option>Trainee</option>
+              <option>Sergeant</option><option>Lieutenant</option><option>Captain</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Role</label>
+            <select class="form-select" id="cRole">
+              <option value="Member">Member</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="cStatus">
+              <option>Active</option><option>Inactive</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Station</label>
+            <input type="text" class="form-control" id="cStation" value="San Diego Central">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-gold" onclick="createUser()">Create User</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+let allUsers = [];
+const editModal  = new bootstrap.Modal(document.getElementById('editModal'));
+const pwModal    = new bootstrap.Modal(document.getElementById('pwModal'));
+const createModal = new bootstrap.Modal(document.getElementById('createModal'));
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function toast(msg, type='success') {
+    const c = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast-msg ${type}`;
+    el.textContent = msg;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+}
+
+function roleBadge(role) {
+    return role === 'Admin'
+        ? `<span class="badge-admin">Admin</span>`
+        : `<span class="badge-member">Member</span>`;
+}
+
+function statusBadge(s) {
+    return s === 'Active'
+        ? `<span class="badge-active">Active</span>`
+        : `<span class="badge-inactive">${s}</span>`;
+}
+
+// ── Load & Render ─────────────────────────────────────────────────────────────
+
+async function loadUsers() {
+    try {
+        const res = await fetch('/api/admin/users', {credentials:'include'});
+        if (res.status === 401 || res.status === 403) {
+            window.location.href = '/admin-login';
+            return;
+        }
+        const data = await res.json();
+        allUsers = Array.isArray(data) ? data : (data.users || []);
+        renderTable(allUsers);
+        document.getElementById('headerMeta').textContent =
+            `${allUsers.length} total users`;
+    } catch(e) {
+        toast('Failed to load users', 'error');
+    }
+}
+
+function renderTable(users) {
+    const tbody = document.getElementById('userTableBody');
+    if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4" style="color:#64748b;">No users found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td>${u.id}</td>
+            <td>${escHtml(u.name)}</td>
+            <td><code style="color:#93c5fd">${escHtml(u.uid)}</code></td>
+            <td>${escHtml(u.sheriff_id)}</td>
+            <td>${escHtml(u.email || '—')}</td>
+            <td>${escHtml(u.rank)}</td>
+            <td style="font-size:.82rem">${escHtml(u.station)}</td>
+            <td>${roleBadge(u.role)}</td>
+            <td>${statusBadge(u.status)}</td>
+            <td>
+                <button class="btn-edit-sm me-1" onclick='openEditModal(${JSON.stringify(u)})'>Edit</button>
+                <button class="btn-pw-sm me-1" onclick='openPwModal(${u.id}, "${escHtml(u.uid)}")'>Passwd</button>
+                <button class="btn-danger-sm" onclick='deleteUser(${u.id}, "${escHtml(u.uid)}")'>Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function escHtml(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+
+document.getElementById('searchInput').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    renderTable(allUsers.filter(u =>
+        u.name.toLowerCase().includes(q) ||
+        u.uid.toLowerCase().includes(q) ||
+        u.sheriff_id.toLowerCase().includes(q) ||
+        (u.email||'').toLowerCase().includes(q) ||
+        u.rank.toLowerCase().includes(q)
+    ));
+});
+
+// ── Edit ──────────────────────────────────────────────────────────────────────
+
+function openEditModal(u) {
+    document.getElementById('editUserId').value  = u.id;
+    document.getElementById('editName').value    = u.name;
+    document.getElementById('editEmail').value   = u.email || '';
+    document.getElementById('editRank').value    = u.rank;
+    document.getElementById('editRole').value    = u.role;
+    document.getElementById('editStatus').value  = u.status;
+    document.getElementById('editStation').value = u.station;
+    document.getElementById('editPhone').value   = u.phone || '';
+    document.getElementById('editSpec').value    = u.specialization || '';
+    document.getElementById('editYears').value   = u.years_of_service || 0;
+    editModal.show();
+}
+
+async function saveEdit() {
+    const id = document.getElementById('editUserId').value;
+    const body = {
+        name:             document.getElementById('editName').value,
+        email:            document.getElementById('editEmail').value,
+        rank:             document.getElementById('editRank').value,
+        role:             document.getElementById('editRole').value,
+        status:           document.getElementById('editStatus').value,
+        station:          document.getElementById('editStation').value,
+        phone:            document.getElementById('editPhone').value,
+        specialization:   document.getElementById('editSpec').value,
+        years_of_service: parseInt(document.getElementById('editYears').value) || 0,
+    };
+    const res = await fetch(`/api/admin/users/${id}`, {
+        method:'PUT', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok) {
+        editModal.hide();
+        toast('User updated successfully');
+        loadUsers();
+    } else {
+        toast(data.message || 'Update failed', 'error');
+    }
+}
+
+// ── Password ──────────────────────────────────────────────────────────────────
+
+function openPwModal(id, uid) {
+    document.getElementById('pwUserId').value    = id;
+    document.getElementById('pwUserLabel').textContent = `Changing password for: ${uid}`;
+    document.getElementById('pwNew').value       = '';
+    pwModal.show();
+}
+
+async function savePassword() {
+    const id  = document.getElementById('pwUserId').value;
+    const pwd = document.getElementById('pwNew').value;
+    const res = await fetch(`/api/admin/users/${id}/password`, {
+        method:'PUT', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({password: pwd})
+    });
+    const data = await res.json();
+    if (res.ok) {
+        pwModal.hide();
+        toast('Password updated');
+    } else {
+        toast(data.message || 'Failed', 'error');
+    }
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+
+async function deleteUser(id, uid) {
+    if (!confirm(`Permanently delete user "${uid}"? This cannot be undone.`)) return;
+    const res = await fetch(`/api/admin/users/${id}`, {
+        method:'DELETE', credentials:'include'
+    });
+    const data = await res.json();
+    if (res.ok) {
+        toast(`User ${uid} deleted`);
+        loadUsers();
+    } else {
+        toast(data.message || 'Delete failed', 'error');
+    }
+}
+
+// ── Create ────────────────────────────────────────────────────────────────────
+
+function openCreateModal() { createModal.show(); }
+
+async function createUser() {
+    const body = {
+        name:       document.getElementById('cName').value.trim(),
+        uid:        document.getElementById('cUid').value.trim(),
+        sheriff_id: document.getElementById('cSheriffId').value.trim(),
+        password:   document.getElementById('cPassword').value,
+        email:      document.getElementById('cEmail').value.trim(),
+        phone:      document.getElementById('cPhone').value.trim(),
+        rank:       document.getElementById('cRank').value,
+        role:       document.getElementById('cRole').value,
+        status:     document.getElementById('cStatus').value,
+        station:    document.getElementById('cStation').value.trim(),
+    };
+    const res = await fetch('/api/admin/users', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok) {
+        createModal.hide();
+        toast('User created successfully');
+        loadUsers();
+    } else {
+        toast(data.message || 'Create failed', 'error');
+    }
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────────
+
+async function adminLogout() {
+    await fetch('/api/sheriff/authenticate', {method:'DELETE', credentials:'include'});
+    window.location.href = '/admin-login';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+loadUsers();
+</script>
+{% endblock %}
+
+{% block background %}{% endblock %}
