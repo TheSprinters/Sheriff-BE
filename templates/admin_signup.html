@@ -129,7 +129,7 @@
                 alert('Username or Sheriff ID already exists. Please try different credentials.');
             } else if (data.id) {
                 alert('Admin account created successfully! You can now login.');
-                window.location.href = '/auth';
+                window.location.href = '/';
             } else {
                 alert('Error creating account: ' + (data.message || 'Unknown error'));
             }
