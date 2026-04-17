@@ -95,7 +95,7 @@ document.getElementById('adminLoginForm').addEventListener('submit', async funct
         }
 
         // Verify admin role
-        if (data.role !== 'Admin') {
+        if (!data.user || data.user.role !== 'Admin') {
             msg.className = 'error';
             msg.textContent = 'Access denied — Admin role required.';
             msg.style.display = 'block';
