@@ -13,11 +13,29 @@
     .admin-header h1 { color: #fbbf24; font-size: 1.4rem; font-weight: 700; margin: 0; }
     .admin-header .meta { color: #94a3b8; font-size: .85rem; }
 
+    /* ── Tab navigation ── */
+    .tab-nav {
+        background: rgba(22,42,70,.8);
+        border-bottom: 1px solid rgba(255,255,255,.07);
+        padding: 0 2rem;
+        display: flex; gap: 4px;
+    }
+    .tab-btn {
+        padding: 12px 20px; border: none; background: transparent;
+        color: #94a3b8; font-size: .9rem; font-weight: 600; cursor: pointer;
+        border-bottom: 3px solid transparent; transition: all .2s;
+    }
+    .tab-btn:hover { color: #e2e8f0; }
+    .tab-btn.active { color: #fbbf24; border-bottom-color: #fbbf24; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
     .btn-gold   { background:linear-gradient(135deg,#f59e0b,#d97706); border:none; color:#1e3a5f; font-weight:700; border-radius:6px; }
     .btn-gold:hover { filter:brightness(1.1); }
     .btn-danger-sm { background:#dc2626; border:none; color:#fff; border-radius:5px; padding:3px 10px; font-size:.8rem; }
     .btn-edit-sm   { background:#2563eb; border:none; color:#fff; border-radius:5px; padding:3px 10px; font-size:.8rem; }
     .btn-pw-sm     { background:#7c3aed; border:none; color:#fff; border-radius:5px; padding:3px 10px; font-size:.8rem; }
+    .btn-rsvp-sm   { background:#0891b2; border:none; color:#fff; border-radius:5px; padding:3px 10px; font-size:.8rem; }
 
     table { border-collapse: collapse; width: 100%; }
     thead th { background:#1e3a5f; color:#fbbf24; border-bottom:2px solid #fbbf24; padding:10px 12px; white-space:nowrap; }
@@ -29,6 +47,11 @@
     .badge-member { background:#2563eb; color:#fff; font-size:.7rem; padding:2px 7px; border-radius:4px; }
     .badge-active   { background:#059669; color:#fff; font-size:.7rem; padding:2px 7px; border-radius:4px; }
     .badge-inactive { background:#6b7280; color:#fff; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+
+    .badge-meeting    { background:rgba(96,165,250,.15); color:#60a5fa; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+    .badge-social     { background:rgba(251,191,36,.15); color:#fbbf24; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+    .badge-training   { background:rgba(52,211,153,.15); color:#34d399; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+    .badge-fundraiser { background:rgba(239,68,68,.15); color:#ef4444; font-size:.7rem; padding:2px 7px; border-radius:4px; }
 
     .modal-content { background:#1e3a5f; color:#e2e8f0; border:1px solid rgba(251,191,36,.3); }
     .modal-header  { border-bottom:1px solid rgba(255,255,255,.1); }
@@ -58,6 +81,18 @@
         color:#e2e8f0; border-radius:8px; padding:8px 14px; width:260px; }
     .search-bar:focus { outline:none; border-color:#fbbf24; }
     .search-bar::placeholder { color:#64748b; }
+
+    /* ── Event cards in RSVP modal ── */
+    .rsvp-table td, .rsvp-table th { font-size:.82rem; }
+    .rsvp-yes-badge  { background:#065f46; color:#6ee7b7; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+    .rsvp-no-badge   { background:#7f1d1d; color:#fca5a5; font-size:.7rem; padding:2px 7px; border-radius:4px; }
+
+    /* ── Event create form inside tab ── */
+    .event-form-section {
+        background:rgba(22,42,70,.6); border:1px solid rgba(255,255,255,.07);
+        border-radius:12px; padding:20px; margin-bottom:24px;
+    }
+    .event-form-section h5 { color:#fbbf24; margin-bottom:16px; font-size:1rem; }
 </style>
 {% endblock %}
 
@@ -66,17 +101,29 @@
 <!-- Header -->
 <div class="admin-header">
     <div>
-        <h1>&#9679; Admin Panel <span style="font-size:.75rem;color:#94a3b8;font-weight:400;">— User Management</span></h1>
-        <div class="meta" id="headerMeta">Loading users…</div>
+        <h1>&#9679; Admin Panel</h1>
+        <div class="meta" id="headerMeta">Loading…</div>
     </div>
     <div class="d-flex align-items-center gap-3">
-        <input class="search-bar" type="text" id="searchInput" placeholder="Search users…">
-        <button class="btn btn-gold btn-sm" onclick="openCreateModal()">+ New User</button>
         <button class="btn btn-outline-light btn-sm" onclick="adminLogout()">Logout</button>
     </div>
 </div>
 
+<!-- Tab Navigation -->
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('users')">&#128101; User Management</button>
+    <button class="tab-btn" onclick="switchTab('events')">&#128197; Event Management</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TAB: USERS
+══════════════════════════════════════════════════════════════ -->
+<div id="tab-users" class="tab-pane active">
 <div class="container-fluid px-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <input class="search-bar" type="text" id="searchInput" placeholder="Search users…">
+        <button class="btn btn-gold btn-sm" onclick="openCreateModal()">+ New User</button>
+    </div>
     <div class="table-responsive">
         <table id="userTable">
             <thead>
@@ -91,6 +138,69 @@
             </tbody>
         </table>
     </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TAB: EVENTS
+══════════════════════════════════════════════════════════════ -->
+<div id="tab-events" class="tab-pane">
+<div class="container-fluid px-4 py-3">
+
+    <!-- Create Event Form -->
+    <div class="event-form-section">
+        <h5>+ Create New Event</h5>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Title *</label>
+                <input type="text" class="form-control" id="evTitle" placeholder="Monthly Meeting, BBQ…">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Type *</label>
+                <select class="form-select" id="evType">
+                    <option value="meeting">Meeting</option>
+                    <option value="social">Social Event</option>
+                    <option value="training">Training</option>
+                    <option value="fundraiser">Fundraiser</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date *</label>
+                <input type="date" class="form-control" id="evDate">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Time *</label>
+                <input type="time" class="form-control" id="evTime">
+            </div>
+            <div class="col-md-9">
+                <label class="form-label">Location *</label>
+                <input type="text" class="form-control" id="evLocation" placeholder="DSA Headquarters, Station…">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" id="evDesc" rows="2" placeholder="Event details, agenda…"></textarea>
+            </div>
+            <div class="col-12">
+                <button class="btn btn-gold btn-sm" onclick="createEvent()">Create Event</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Table -->
+    <div class="table-responsive">
+        <table id="eventsTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Title</th><th>Type</th><th>Date</th>
+                    <th>Time</th><th>Location</th><th>Yes</th><th>No</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="eventsTableBody">
+                <tr><td colspan="9" class="text-center py-4" style="color:#64748b;">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 </div>
 
 <!-- ── Edit User Modal ── -->
@@ -248,14 +358,56 @@
   </div>
 </div>
 
+<!-- ── RSVP List Modal ── -->
+<div class="modal fade" id="rsvpModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="rsvpModalTitle">RSVPs</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="rsvpSummary" class="mb-3" style="font-size:.9rem;color:#94a3b8;"></div>
+        <div class="table-responsive">
+          <table class="rsvp-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Username</th><th>Rank</th><th>Response</th><th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="rsvpTableBody">
+              <tr><td colspan="5" class="text-center py-3" style="color:#64748b;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div id="toast-container"></div>
 
 <script>
 let allUsers = [];
-const editModal  = new bootstrap.Modal(document.getElementById('editModal'));
-const pwModal    = new bootstrap.Modal(document.getElementById('pwModal'));
+let allEvents = [];
+const editModal   = new bootstrap.Modal(document.getElementById('editModal'));
+const pwModal     = new bootstrap.Modal(document.getElementById('pwModal'));
 const createModal = new bootstrap.Modal(document.getElementById('createModal'));
+const rsvpModal   = new bootstrap.Modal(document.getElementById('rsvpModal'));
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (name === 'events') loadEvents();
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -280,7 +432,21 @@ function statusBadge(s) {
         : `<span class="badge-inactive">${s}</span>`;
 }
 
-// ── Load & Render ─────────────────────────────────────────────────────────────
+function typeBadge(t) {
+    return `<span class="badge-${t}">${t}</span>`;
+}
+
+function escHtml(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+}
+
+// ── Users: Load & Render ──────────────────────────────────────────────────────
 
 async function loadUsers() {
     try {
@@ -293,7 +459,7 @@ async function loadUsers() {
         allUsers = Array.isArray(data) ? data : (data.users || []);
         renderTable(allUsers);
         document.getElementById('headerMeta').textContent =
-            `${allUsers.length} total users`;
+            `${allUsers.length} users`;
     } catch(e) {
         toast('Failed to load users', 'error');
     }
@@ -325,11 +491,7 @@ function renderTable(users) {
     `).join('');
 }
 
-function escHtml(s) {
-    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ── Search ────────────────────────────────────────────────────────────────────
+// ── User Search ───────────────────────────────────────────────────────────────
 
 document.getElementById('searchInput').addEventListener('input', function() {
     const q = this.value.toLowerCase();
@@ -342,7 +504,7 @@ document.getElementById('searchInput').addEventListener('input', function() {
     ));
 });
 
-// ── Edit ──────────────────────────────────────────────────────────────────────
+// ── Edit User ─────────────────────────────────────────────────────────────────
 
 function openEditModal(u) {
     document.getElementById('editUserId').value  = u.id;
@@ -377,13 +539,8 @@ async function saveEdit() {
         body: JSON.stringify(body)
     });
     const data = await res.json();
-    if (res.ok) {
-        editModal.hide();
-        toast('User updated successfully');
-        loadUsers();
-    } else {
-        toast(data.message || 'Update failed', 'error');
-    }
+    if (res.ok) { editModal.hide(); toast('User updated'); loadUsers(); }
+    else toast(data.message || 'Update failed', 'error');
 }
 
 // ── Password ──────────────────────────────────────────────────────────────────
@@ -404,15 +561,11 @@ async function savePassword() {
         body: JSON.stringify({password: pwd})
     });
     const data = await res.json();
-    if (res.ok) {
-        pwModal.hide();
-        toast('Password updated');
-    } else {
-        toast(data.message || 'Failed', 'error');
-    }
+    if (res.ok) { pwModal.hide(); toast('Password updated'); }
+    else toast(data.message || 'Failed', 'error');
 }
 
-// ── Delete ────────────────────────────────────────────────────────────────────
+// ── Delete User ───────────────────────────────────────────────────────────────
 
 async function deleteUser(id, uid) {
     if (!confirm(`Permanently delete user "${uid}"? This cannot be undone.`)) return;
@@ -420,15 +573,11 @@ async function deleteUser(id, uid) {
         method:'DELETE', credentials:'include'
     });
     const data = await res.json();
-    if (res.ok) {
-        toast(`User ${uid} deleted`);
-        loadUsers();
-    } else {
-        toast(data.message || 'Delete failed', 'error');
-    }
+    if (res.ok) { toast(`User ${uid} deleted`); loadUsers(); }
+    else toast(data.message || 'Delete failed', 'error');
 }
 
-// ── Create ────────────────────────────────────────────────────────────────────
+// ── Create User ───────────────────────────────────────────────────────────────
 
 function openCreateModal() { createModal.show(); }
 
@@ -451,12 +600,128 @@ async function createUser() {
         body: JSON.stringify(body)
     });
     const data = await res.json();
+    if (res.ok) { createModal.hide(); toast('User created'); loadUsers(); }
+    else toast(data.message || 'Create failed', 'error');
+}
+
+// ── Events: Load & Render ─────────────────────────────────────────────────────
+
+async function loadEvents() {
+    try {
+        const res = await fetch('/api/events', {credentials:'include'});
+        if (!res.ok) { toast('Failed to load events', 'error'); return; }
+        allEvents = await res.json();
+        renderEventsTable(allEvents);
+    } catch(e) {
+        toast('Failed to load events', 'error');
+    }
+}
+
+function renderEventsTable(events) {
+    const tbody = document.getElementById('eventsTableBody');
+    if (!events.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4" style="color:#64748b;">No events found. Create one above.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = events.map(ev => `
+        <tr>
+            <td>${ev.id}</td>
+            <td style="font-weight:600;color:#e2e8f0">${escHtml(ev.title)}</td>
+            <td>${typeBadge(ev.type)}</td>
+            <td style="font-size:.82rem">${fmtDate(ev.date)}</td>
+            <td>${escHtml(ev.time)}</td>
+            <td style="font-size:.82rem">${escHtml(ev.location)}</td>
+            <td><span style="color:#34d399;font-weight:700">${ev.rsvp.yes}</span></td>
+            <td><span style="color:#f87171;font-weight:700">${ev.rsvp.no}</span></td>
+            <td>
+                <button class="btn-rsvp-sm me-1" onclick="openRsvpModal(${ev.id}, '${escHtml(ev.title)}', ${ev.rsvp.yes}, ${ev.rsvp.no})">RSVPs</button>
+                <button class="btn-danger-sm" onclick="deleteEvent(${ev.id}, '${escHtml(ev.title)}')">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ── Create Event ──────────────────────────────────────────────────────────────
+
+async function createEvent() {
+    const body = {
+        title:       document.getElementById('evTitle').value.trim(),
+        type:        document.getElementById('evType').value,
+        date:        document.getElementById('evDate').value,
+        time:        document.getElementById('evTime').value,
+        location:    document.getElementById('evLocation').value.trim(),
+        description: document.getElementById('evDesc').value.trim(),
+    };
+    if (!body.title || !body.date || !body.time || !body.location) {
+        toast('Title, date, time, and location are required', 'error');
+        return;
+    }
+    const res = await fetch('/api/events', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+    });
+    const data = await res.json();
     if (res.ok) {
-        createModal.hide();
-        toast('User created successfully');
-        loadUsers();
+        toast(`Event "${data.title}" created`);
+        ['evTitle','evDate','evTime','evLocation','evDesc'].forEach(id => document.getElementById(id).value = '');
+        loadEvents();
     } else {
-        toast(data.message || 'Create failed', 'error');
+        toast(data.message || 'Failed to create event', 'error');
+    }
+}
+
+// ── Delete Event ──────────────────────────────────────────────────────────────
+
+async function deleteEvent(id, title) {
+    if (!confirm(`Delete event "${title}"? All RSVPs will be removed.`)) return;
+    const res = await fetch(`/api/events/${id}`, {
+        method:'DELETE', credentials:'include'
+    });
+    const data = await res.json();
+    if (res.ok) { toast(`Event deleted`); loadEvents(); }
+    else toast(data.message || 'Delete failed', 'error');
+}
+
+// ── RSVP Modal ────────────────────────────────────────────────────────────────
+
+async function openRsvpModal(eventId, title, yesCount, noCount) {
+    document.getElementById('rsvpModalTitle').textContent = `RSVPs — ${title}`;
+    document.getElementById('rsvpSummary').innerHTML =
+        `<span style="color:#34d399;font-weight:700">${yesCount} attending</span> &bull; ` +
+        `<span style="color:#f87171;font-weight:700">${noCount} not attending</span> &bull; ` +
+        `${yesCount + noCount} total responses`;
+    document.getElementById('rsvpTableBody').innerHTML =
+        '<tr><td colspan="5" class="text-center py-3" style="color:#64748b;">Loading…</td></tr>';
+    rsvpModal.show();
+
+    try {
+        const res = await fetch(`/api/events/${eventId}/rsvps`, {credentials:'include'});
+        if (!res.ok) {
+            document.getElementById('rsvpTableBody').innerHTML =
+                '<tr><td colspan="5" class="text-center py-3" style="color:#ef4444;">Failed to load RSVPs</td></tr>';
+            return;
+        }
+        const rsvps = await res.json();
+        if (!rsvps.length) {
+            document.getElementById('rsvpTableBody').innerHTML =
+                '<tr><td colspan="5" class="text-center py-3" style="color:#64748b;">No RSVPs yet</td></tr>';
+            return;
+        }
+        document.getElementById('rsvpTableBody').innerHTML = rsvps.map(r => `
+            <tr>
+                <td>${escHtml(r.sheriff_name)}</td>
+                <td><code style="color:#93c5fd">${escHtml(r.sheriff_uid)}</code></td>
+                <td>${escHtml(r.sheriff_rank)}</td>
+                <td>${r.response === 'yes'
+                    ? '<span class="rsvp-yes-badge">Yes</span>'
+                    : '<span class="rsvp-no-badge">No</span>'}</td>
+                <td style="font-size:.75rem;color:#64748b">${r.responded_at ? new Date(r.responded_at).toLocaleString() : '—'}</td>
+            </tr>
+        `).join('');
+    } catch(e) {
+        document.getElementById('rsvpTableBody').innerHTML =
+            '<tr><td colspan="5" class="text-center py-3" style="color:#ef4444;">Error loading RSVPs</td></tr>';
     }
 }
 
@@ -469,6 +734,8 @@ async function adminLogout() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
+// Set default date for event form to today
+document.getElementById('evDate').value = new Date().toISOString().split('T')[0];
 loadUsers();
 </script>
 {% endblock %}

@@ -30,9 +30,11 @@ from api.grade_api import grade_api
 from api.feedback_api import feedback_api
 from hacks.joke import joke_api
 from api.admin_api import admin_api
+from api.event_api import event_api
 
 # database Initialization functions
 from model.sheriff import Sheriff, initSheriffs
+from model.event import initEvents
 
 # Setup Login Manager
 login_manager = LoginManager()
@@ -67,6 +69,7 @@ app.register_blueprint(grade_api)
 app.register_blueprint(feedback_api)
 app.register_blueprint(joke_api)
 app.register_blueprint(admin_api)
+app.register_blueprint(event_api)
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
@@ -142,6 +145,7 @@ custom_cli = AppGroup('custom', help='Custom commands')
 @custom_cli.command('generate_data')
 def generate_data():
     initSheriffs()
+    initEvents()
 
 app.cli.add_command(custom_cli)
 
