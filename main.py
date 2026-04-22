@@ -73,6 +73,10 @@ app.register_blueprint(admin_api)
 app.register_blueprint(event_api)
 app.register_blueprint(google_auth_api)
 
+# Create any missing tables (safe to call on every startup)
+with app.app_context():
+    db.create_all()
+
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
 
