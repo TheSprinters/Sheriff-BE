@@ -3,10 +3,10 @@ services:
         web:
                 image: sheriff
                 build: .
-
+                env_file:
+                        - .env
                 ports:
                         - "8325:8325"
                 volumes:
                         - ./instance:/app/instance
                 restart: unless-stopped
-                
