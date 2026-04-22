@@ -4,6 +4,7 @@ from flask_restful import Api, Resource
 from __init__ import db
 from api.authorize import auth_required
 from model.event import Event, EventRSVP
+from api.email_service import send_rsvp_confirmation
 from datetime import date
 
 event_api = Blueprint('event_api', __name__, url_prefix='/api/events')
@@ -100,15 +101,34 @@ class EventUserRSVP(Resource):
         ).first()
 
         if existing:
+            prev = existing._response
             existing._response = response
             db.session.commit()
+            # Send confirmation if user just switched to attending
+            if response == 'yes' and prev != 'yes':
+                _send_confirmation(g.current_user, event)
             return {'message': 'RSVP updated', 'response': response}, 200
 
         rsvp = EventRSVP(event_id=event_id, sheriff_id=g.current_user.id, response=response)
         result = rsvp.create()
         if result is None:
             return {'message': 'Failed to save RSVP'}, 500
+
+        if response == 'yes':
+            _send_confirmation(g.current_user, event)
+
         return {'message': 'RSVP recorded', 'response': response}, 201
+
+
+def _send_confirmation(user, event):
+    """Fire-and-forget RSVP email; never raises."""
+    try:
+        email = getattr(user, '_email', None) or getattr(user, 'email', '')
+        name  = getattr(user, '_name',  None) or getattr(user, 'name',  '')
+        if email:
+            send_rsvp_confirmation(email, name, event)
+    except Exception as exc:
+        print(f'[event_api] Email send error: {exc}')
 
 
 api.add_resource(Events, '')

@@ -31,6 +31,7 @@ from api.feedback_api import feedback_api
 from hacks.joke import joke_api
 from api.admin_api import admin_api
 from api.event_api import event_api
+from api.google_auth import google_auth_api
 
 # database Initialization functions
 from model.sheriff import Sheriff, initSheriffs
@@ -70,6 +71,7 @@ app.register_blueprint(feedback_api)
 app.register_blueprint(joke_api)
 app.register_blueprint(admin_api)
 app.register_blueprint(event_api)
+app.register_blueprint(google_auth_api)
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"

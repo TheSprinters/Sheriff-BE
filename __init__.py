@@ -185,3 +185,14 @@ app.config['GROQ_API_KEY'] = os.environ.get('GROQ_API_KEY') or None
 
 # OpenAI API settings
 app.config['OPENAI_API_KEY'] = os.environ.get('OPENAI_API_KEY') or None
+
+# Google OAuth settings (register at console.cloud.google.com)
+app.config['GOOGLE_CLIENT_ID']     = os.environ.get('GOOGLE_CLIENT_ID') or ''
+app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET') or ''
+
+# Gmail SMTP settings (use an App Password, not your regular Gmail password)
+# Enable 2FA on the account, then create an App Password at myaccount.google.com/apppasswords
+app.config['MAIL_SERVER']   = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT']     = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
