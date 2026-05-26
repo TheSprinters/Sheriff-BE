@@ -1,4 +1,136 @@
-# README
+# DSA San Diego Portal — Backend Handoff
+
+> **Handoff document for TheSprinters → incoming team, May 2026**
+> Original team: Akhil, Neil, Moiz (DNHS Computer Science, Period 2)
+> Client: Deputy Sheriffs' Association of San Diego County — [dsasd.org](https://dsasd.org)
+
+This Flask backend powers the DSASD member portal at `dsasd.opencodingsociety.com`. It provides sheriff-specific authentication, member management, an AI chatbot, and an events calendar — all built on top of the shared OCS Flask starter.
+
+---
+
+## DSASD Project Overview
+
+The Deputy Sheriffs' Association (DSA) of San Diego County represents over 4,229 sworn deputies across 12 stations. We identified three critical failures on their existing WordPress site — broken login, invisible search, and 9+ cluttered menu items — and rebuilt their web presence as a modern single-page portal.
+
+### What TheSprinters built
+
+| Feature | Files | Status |
+|---|---|---|
+| Sheriff authentication (signup/login/logout) | `api/sheriff.py`, `model/sheriff.py` | ✅ Complete |
+| JWT session management (`jwt_sheriff` cookie) | `api/sheriff.py` | ✅ Complete |
+| Admin panel (view/delete members) | `api/sheriff.py` | ✅ Complete |
+| AI chatbot (Claude/OpenAI API) | `api/sheriff_chat.py` | ✅ Complete |
+| Events calendar API | `api/event_api.py` | ✅ Complete |
+| Member profile (badge #, rank, station) | `model/sheriff.py` | ✅ Complete |
+
+### DSASD-specific files (start here)
+
+```
+cap_back/
+├── model/sheriff.py          # Sheriff SQLAlchemy model — sheriff_users table
+├── api/sheriff.py            # Auth + CRUD endpoints (login, signup, admin)
+├── api/sheriff_chat.py       # AI chatbot — Claude/OpenAI API integration
+└── api/event_api.py          # Events calendar API
+```
+
+### API Endpoints
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/sheriff/authenticate` | Login → sets `jwt_sheriff` cookie |
+| `DELETE` | `/api/sheriff/authenticate` | Logout → expires cookie |
+| `GET` | `/api/sheriff/id` | Get current user from JWT |
+| `POST` | `/api/sheriff/user` | Create new member (signup) |
+| `GET` | `/api/sheriff/user` | List all members (admin only) |
+| `PUT` | `/api/sheriff/user` | Update member profile |
+| `DELETE` | `/api/sheriff/user` | Delete member (admin only) |
+| `POST` | `/api/sheriff/chat` | AI chatbot → Claude/OpenAI API |
+
+### Sheriff model fields
+
+Badge/Sheriff ID, Name, UID, Password (hashed), Rank (Deputy/Corporal/Sergeant/Lieutenant/Captain), Station (all 12 SD County stations), Phone, Role (member/admin).
+
+---
+
+## Next Steps for the Incoming Team
+
+These are the features TheSprinters planned but did not complete. They are listed in priority order.
+
+### High priority
+
+- **Connect the chatbot to the Anthropic Claude API** — the current `sheriff_chat.py` is wired to the OpenAI endpoint (`/v1/chat/completions`). The system prompt and message-history logic are already written; you just need to swap the API URL, auth header, and model name to use `claude-sonnet-4-6` or similar. Add `ANTHROPIC_API_KEY` to `.env`.
+- **Persist RSVP data** — the RSVP buttons on the frontend events calendar toggle visually but don't write to the database. Add an `rsvp` table (or a column on the event model) and a `POST /api/event/rsvp` endpoint.
+- **Email notifications** — there is a stub `api/email_service.py` already in the repo. Wire it to send a confirmation email when a member RSVPs or when a new newsletter is posted.
+
+### Medium priority
+
+- **WordPress API sync** — pull live news and newsletter data from dsasd.org's WordPress REST API (`dsasd.org/wp-json/wp/v2/posts`) instead of the static hardcoded cards on the frontend.
+- **Document center** — add an S3-backed file upload/download endpoint so members can access contracts, MOU PDFs, and forms without leaving the portal. There are stubs for S3 in `testing/s3tests.py`.
+- **Personalized dashboard** — use the JWT `rank` and `station` claims to return station-specific news and events from the API. The frontend already reads these fields on login.
+
+### Lower priority / stretch goals
+
+- **Push notifications** — a `service-worker.js` already exists in the frontend. Add a Web Push subscription endpoint to the backend and trigger pushes when new events or newsletters are created.
+- **ML content recommendations** — log tile-click and search interactions to an `analytics` table, then train a collaborative-filtering model (scikit-learn) to reorder dashboard tiles per member. Serve predictions from `/api/sheriff/recommendations`.
+- **WCAG 2.1 AA accessibility audit** — run an automated audit (axe-core or Lighthouse) and address keyboard navigation gaps and ARIA label coverage.
+- **Production database migration** — the portal currently runs SQLite. When dsasd.org is ready to adopt the portal, migrate to AWS RDS (PostgreSQL) using the existing `scripts/db_migrate-prod2sqlite.py` and `db_restore-sqlite2prod.py` scripts.
+
+---
+
+## Environment Setup
+
+Copy `.env.example` (or use the template below) and fill in your own keys. **Never commit `.env` to git.**
+
+```shell
+# Flask
+IS_PRODUCTION=false
+FLASK_PORT=8587
+
+# Admin defaults
+DEFAULT_PASSWORD='YourPassword!'
+ADMIN_USER='Admin Name'
+ADMIN_UID='admin'
+ADMIN_PASSWORD='AdminPass!'
+
+# AI Chatbot — pick one
+ANTHROPIC_API_KEY=sk-ant-xxxxx        # preferred (Claude API)
+# or
+OPENAI_API_KEY=sk-xxxxx               # fallback (GPT-4o-mini)
+
+# AWS S3 (for document center — future)
+AWS_ACCESS_KEY_ID=xxxxx
+AWS_SECRET_ACCESS_KEY=xxxxx
+AWS_S3_BUCKET=dsasd-documents
+
+# GitHub
+GITHUB_TOKEN=ghp_xxx
+```
+
+---
+
+## Deployment
+
+The backend runs on AWS EC2 behind NGINX with Let's Encrypt SSL. To redeploy after pulling changes:
+
+```bash
+# On the EC2 instance
+git pull
+docker-compose down && docker-compose up -d --build
+```
+
+NGINX config is at `nginx_for_flask_8587`. The frontend at `dsasd.opencodingsociety.com` proxies `/api/*` requests to this backend on port 8587.
+
+---
+
+## License
+
+This project is licensed under the Apache License 2.0. See [`LICENSE`](./LICENSE).
+
+The DSASD-specific code (sheriff auth, chatbot, events API) was authored by Akhil, Neil, and Moiz as a community contribution to the Deputy Sheriffs' Association of San Diego County through DNHS Computer Science. Long-term hosting, maintenance, and operational costs would need to be negotiated separately with the organization.
+
+---
+
+# Original README
 
 > This is a project to support AP Computer Science Principles (APCSP) as well as a UC articulated Data Structures course. It was crafted iteratively starting in 2020 to the present time.  The primary purposes are ...
 

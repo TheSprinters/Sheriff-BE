@@ -31,8 +31,8 @@ def _backend_base() -> str:
 def _frontend_base() -> str:
     is_prod = os.environ.get('IS_PRODUCTION', 'false').lower() == 'true'
     if is_prod:
-        return 'https://sheriff.opencodingsociety.com'
-    return os.environ.get('FRONTEND_URL', 'http://localhost:4100')
+        return os.environ.get('FRONTEND_URL', 'https://dsasd.opencodingsociety.com')
+    return os.environ.get('FRONTEND_URL', 'http://localhost:4500')
 
 
 def _redirect_uri() -> str:
